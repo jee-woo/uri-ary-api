@@ -1,16 +1,17 @@
 package com.diary.shared_diary.config;
 
+import com.diary.shared_diary.auth.CustomUserDetails;
 import com.diary.shared_diary.auth.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.List;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -30,12 +31,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
             String email = jwtUtil.validateAndGetEmail(token); // 유효성 검사 및 이메일 추출
-
             if (email != null) {
+                CustomUserDetails userDetails = new CustomUserDetails(email);
+
+
                 UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(email, null, List.of());
+                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+                Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             }
+
         }
 
         filterChain.doFilter(request, response);
