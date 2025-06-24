@@ -43,9 +43,9 @@ public class GroupController {
     @PostMapping
     public GroupResponseDto createGroup(
             @RequestBody GroupRequestDto dto,
-            org.springframework.security.core.Authentication authentication
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        String email = (String) authentication.getPrincipal();
+        String email = userDetails.getUsername();
         return groupService.createGroup(email, dto);
     }
 
