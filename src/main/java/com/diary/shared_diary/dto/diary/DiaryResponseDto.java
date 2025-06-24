@@ -1,17 +1,23 @@
 package com.diary.shared_diary.dto.diary;
 
-import com.diary.shared_diary.dto.user.UserResponseDto;
-import lombok.AllArgsConstructor;
+import com.diary.shared_diary.domain.Diary;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
 
 @Getter
-@AllArgsConstructor
 public class DiaryResponseDto {
     private Long id;
     private String title;
     private String content;
+    private String authorName;
     private LocalDateTime createdAt;
-    private UserResponseDto author;
+
+    public DiaryResponseDto(Diary diary) {
+        this.id = diary.getId();
+        this.title = diary.getTitle();
+        this.content = diary.getContent();
+        this.authorName = diary.getAuthor().getUsername();
+        this.createdAt = diary.getCreatedAt();
+    }
 }

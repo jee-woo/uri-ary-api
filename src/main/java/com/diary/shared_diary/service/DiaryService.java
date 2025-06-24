@@ -18,28 +18,24 @@ import java.util.List;
 public class DiaryService {
 
     private final DiaryRepository diaryRepository;
-    private final UserRepository userRepository;
     private final GroupRepository groupRepository;
+    private final UserRepository userRepository;
 
-    public DiaryService(
-            DiaryRepository diaryRepository,
-            UserRepository userRepository,
-            GroupRepository groupRepository
-    ) {
+    public DiaryService(DiaryRepository diaryRepository, GroupRepository groupRepository, UserRepository userRepository) {
         this.diaryRepository = diaryRepository;
+        this.groupRepository = groupRepository;
         this.userRepository = userRepository;
         this.groupRepository = groupRepository;
     }
 
-    public DiaryResponseDto createDiaryInGroup(Long groupId, DiaryRequestDto dto) {
+    public DiaryResponseDto createDiary(Long groupId, String email, DiaryRequestDto dto) {
+        User author = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("Group not found"));
 
-        User author = userRepository.findById(dto.getAuthorId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
         if (!group.getMembers().contains(author)) {
-            throw new RuntimeException("User is not a member of this group");
+            throw new RuntimeException("그룹에 속한 사용자만 작성할 수 있습니다.");
         }
 
         Diary diary = Diary.builder()
@@ -51,18 +47,7 @@ public class DiaryService {
                 .build();
 
         Diary saved = diaryRepository.save(diary);
-
-        return new DiaryResponseDto(
-                saved.getId(),
-                saved.getTitle(),
-                saved.getContent(),
-                saved.getCreatedAt(),
-                new UserResponseDto(
-                        author.getId(),
-                        author.getUsername(),
-                        author.getEmail()
-                )
-        );
+        return new DiaryResponseDto(saved);
     }
 
     public List<DiaryResponseDto> getDiariesByGroup(Long groupId) {

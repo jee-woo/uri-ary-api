@@ -8,5 +8,4 @@ import lombok.Setter;
 public class DiaryRequestDto {
     private String title;
     private String content;
-    private Long authorId;
 }
