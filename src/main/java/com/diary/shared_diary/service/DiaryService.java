@@ -3,7 +3,6 @@ package com.diary.shared_diary.service;
 import com.diary.shared_diary.domain.Diary;
 import com.diary.shared_diary.domain.Group;
 import com.diary.shared_diary.domain.User;
-import com.diary.shared_diary.dto.user.UserResponseDto;
 import com.diary.shared_diary.dto.diary.DiaryRequestDto;
 import com.diary.shared_diary.dto.diary.DiaryResponseDto;
 import com.diary.shared_diary.repository.DiaryRepository;
@@ -25,7 +24,6 @@ public class DiaryService {
         this.diaryRepository = diaryRepository;
         this.groupRepository = groupRepository;
         this.userRepository = userRepository;
-        this.groupRepository = groupRepository;
     }
 
     public DiaryResponseDto createDiary(Long groupId, String email, DiaryRequestDto dto) {
@@ -50,23 +48,18 @@ public class DiaryService {
         return new DiaryResponseDto(saved);
     }
 
-    public List<DiaryResponseDto> getDiariesByGroup(Long groupId) {
+    public List<DiaryResponseDto> getDiariesByGroup(Long groupId, String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("Group not found"));
 
-        List<Diary> diaries = diaryRepository.findByGroup(group);
+        if (!group.getMembers().contains(user)) {
+            throw new RuntimeException("그룹에 속한 사용자만 조회할 수 있습니다.");
+        }
 
-        return diaries.stream().map(diary -> new DiaryResponseDto(
-                diary.getId(),
-                diary.getTitle(),
-                diary.getContent(),
-                diary.getCreatedAt(),
-                new UserResponseDto(
-                        diary.getAuthor().getId(),
-                        diary.getAuthor().getUsername(),
-                        diary.getAuthor().getEmail()
-                )
-        )).toList();
+        return diaryRepository.findByGroup(group).stream()
+                .map(DiaryResponseDto::new)
+                .toList();
     }
-
 }
