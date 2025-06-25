@@ -3,6 +3,7 @@ package com.diary.shared_diary.service;
 import com.diary.shared_diary.domain.Diary;
 import com.diary.shared_diary.domain.Group;
 import com.diary.shared_diary.domain.User;
+import com.diary.shared_diary.dto.diary.DiaryDetailResponseDto;
 import com.diary.shared_diary.dto.diary.DiaryRequestDto;
 import com.diary.shared_diary.dto.diary.DiaryResponseDto;
 import com.diary.shared_diary.repository.DiaryRepository;
@@ -48,18 +49,20 @@ public class DiaryService {
         return new DiaryResponseDto(saved);
     }
 
-    public List<DiaryResponseDto> getDiariesByGroup(Long groupId, String email) {
+
+    public DiaryDetailResponseDto getDiaryDetail(Long diaryId, String email) {
+        Diary diary = diaryRepository.findById(diaryId)
+                .orElseThrow(() -> new RuntimeException("Diary not found"));
+
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        Group group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new RuntimeException("Group not found"));
 
-        if (!group.getMembers().contains(user)) {
-            throw new RuntimeException("그룹에 속한 사용자만 조회할 수 있습니다.");
+        // 권한 체크: 그룹 멤버만 조회 가능
+        if (!diary.getGroup().getMembers().contains(user)) {
+            throw new RuntimeException("해당 그룹에 속한 사용자만 조회할 수 있습니다.");
         }
 
-        return diaryRepository.findByGroup(group).stream()
-                .map(DiaryResponseDto::new)
-                .toList();
+        return new DiaryDetailResponseDto(diary);
     }
+
 }
