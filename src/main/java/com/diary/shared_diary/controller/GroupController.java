@@ -6,6 +6,7 @@ import com.diary.shared_diary.repository.GroupRepository;
 import com.diary.shared_diary.service.GroupService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -43,7 +44,7 @@ public class GroupController {
     @PostMapping
     public GroupResponseDto createGroup(
             @RequestBody GroupRequestDto dto,
-            org.springframework.security.core.Authentication authentication
+            Authentication authentication
     ) {
         String email = (String) authentication.getPrincipal();
         return groupService.createGroup(email, dto);
