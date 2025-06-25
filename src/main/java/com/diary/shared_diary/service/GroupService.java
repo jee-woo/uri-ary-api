@@ -49,7 +49,7 @@ public class GroupService {
         if (!group.getMembers().contains(user)) {
             throw new RuntimeException("해당 그룹에 접근할 권한이 없습니다.");
         }
-        List<Diary> diaries = diaryRepository.findByGroup(group);
+        List<Diary> diaries = diaryRepository.findByGroupOrderByCreatedAtDesc(group);
 
         return new GroupDetailResponseDto(group, diaries);
     }
@@ -65,7 +65,7 @@ public class GroupService {
         } while (groupRepository.findByCode(code).isPresent());
 
         Group group = Group.builder()
-                .name(dto.getName())
+                .name(dto.name())
                 .code(code)
                 .createdAt(LocalDateTime.now())
                 .members(List.of(creator))
