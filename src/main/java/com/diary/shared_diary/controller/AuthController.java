@@ -2,6 +2,7 @@ package com.diary.shared_diary.controller;
 
 import com.diary.shared_diary.auth.JwtUtil;
 import com.diary.shared_diary.domain.User;
+import com.diary.shared_diary.dto.auth.LoginSuccessResponseDto;
 import com.diary.shared_diary.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +22,7 @@ public class AuthController {
     private final JwtUtil jwtUtil;
 
     @GetMapping("/login/success")
-    public ResponseEntity<?> loginSuccess(@AuthenticationPrincipal OAuth2User oauth2User) {
+    public ResponseEntity<LoginSuccessResponseDto> loginSuccess(@AuthenticationPrincipal OAuth2User oauth2User) {
         Map<String, Object> kakaoAccount = (Map<String, Object>) oauth2User.getAttribute("kakao_account");
         String email = (String) kakaoAccount.get("email");
         String nickname = (String) ((Map<String, Object>) kakaoAccount.get("profile")).get("nickname");
@@ -35,6 +36,6 @@ public class AuthController {
 
         String token = jwtUtil.generateToken(user.getEmail());
 
-        return ResponseEntity.ok().body(Map.of("token", token));
+        return ResponseEntity.ok(new LoginSuccessResponseDto(email, nickname, token));
     }
 }

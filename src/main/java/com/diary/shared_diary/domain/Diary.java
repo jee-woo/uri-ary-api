@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
 @Getter
@@ -18,19 +17,16 @@ public class Diary {
 
     private String title;
 
-    @Lob
+    @Column(columnDefinition = "TEXT")
     private String content;
 
     private LocalDateTime createdAt;
 
     @ManyToOne
-    @JoinColumn(name = "author_id")
-    private User author;
-
-    @OneToMany(mappedBy = "diary")
-    private List<Comment> comments;
-
-    @ManyToOne
     @JoinColumn(name = "group_id")
     private Group group;
+
+    @ManyToOne
+    @JoinColumn(name = "author_id")
+    private User author;
 }
