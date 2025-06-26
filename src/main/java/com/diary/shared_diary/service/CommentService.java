@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CommentService {
@@ -56,13 +57,28 @@ public class CommentService {
             throw new RuntimeException("해당 그룹 멤버만 댓글을 달 수 있습니다.");
         }
 
+        Comment parent = Optional.ofNullable(dto.getParentId())
+                .map(id -> {
+                    Comment p = commentRepository.findById(id)
+                            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 부모 댓글입니다."));
+
+                    if (p.getParent() != null) {
+                        throw new IllegalArgumentException("대댓글에는 다시 댓글을 달 수 없습니다.");
+                    }
+
+                    return p;
+                })
+                .orElse(null);
+
         Comment comment = Comment.builder()
                 .content(dto.getContent())
                 .author(user)
                 .diary(diary)
                 .createdAt(LocalDateTime.now())
+                .parent(parent)
                 .build();
 
-        return new CommentResponseDto(commentRepository.save(comment));
+        commentRepository.save(comment);
+        return new CommentResponseDto(comment);
     }
 }

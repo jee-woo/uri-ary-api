@@ -11,11 +11,13 @@ public class CommentResponseDto {
     private String content;
     private String authorUsername;
     private LocalDateTime createdAt;
+    private Long parentId;
 
     public CommentResponseDto(Comment comment) {
         this.id = comment.getId();
         this.content = comment.getContent();
         this.authorUsername = comment.getAuthor().getUsername();
         this.createdAt = comment.getCreatedAt();
+        this.parentId = comment.getParent() != null ? comment.getParent().getId() : null;
     }
 }
