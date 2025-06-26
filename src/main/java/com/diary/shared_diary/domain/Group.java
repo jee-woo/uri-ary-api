@@ -33,4 +33,11 @@ public class Group {
     )
     @JsonManagedReference
     private List<User> members;
+
+    public void addMember(User user) {
+        this.members.add(user);
+        if (!user.getGroups().contains(this)) {
+            user.getGroups().add(this);
+        }
+    }
 }
