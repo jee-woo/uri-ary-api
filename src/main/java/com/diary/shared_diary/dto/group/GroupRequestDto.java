@@ -7,5 +7,4 @@ import lombok.Setter;
 @Setter
 public class GroupRequestDto {
     private String name;
-    private Long creatorId;
 }

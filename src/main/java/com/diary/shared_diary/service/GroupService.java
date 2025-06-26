@@ -22,11 +22,11 @@ public class GroupService {
         this.userRepository = userRepository;
     }
 
-    public List<GroupResponseDto> getGroupsByUser(Long userId) {
-        User user = userRepository.findById(userId)
+    public List<GroupResponseDto> getGroupsByUserEmail(String email) {
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        List<Group> groups = groupRepository.findAllByMembersContaining(user);
+        List<Group> groups = groupRepository.findAllByMembersContains(user);
 
         return groups.stream()
                 .map(group -> new GroupResponseDto(group.getId(), group.getName()))
@@ -34,9 +34,10 @@ public class GroupService {
     }
 
 
-    public GroupResponseDto createGroup(GroupRequestDto dto) {
-        User creator = userRepository.findById(dto.getCreatorId())
-                .orElseThrow(() -> new RuntimeException("Creator not found"));
+
+    public GroupResponseDto createGroup(GroupRequestDto dto, String email) {
+        User creator = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         Group group = Group.builder()
                 .name(dto.getName())
@@ -47,6 +48,7 @@ public class GroupService {
         Group saved = groupRepository.save(group);
         return new GroupResponseDto(saved.getId(), saved.getName());
     }
+
 
 
     public void addMembers(Long groupId, List<Long> userIds) {
