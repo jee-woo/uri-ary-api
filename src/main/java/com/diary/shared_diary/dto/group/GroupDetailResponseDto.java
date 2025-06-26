@@ -20,6 +20,6 @@ public class GroupDetailResponseDto {
         this.code = group.getCode();
         this.members = group.getMembers().stream()
                 .map(UserResponseDto::new)
-                .collect(Collectors.toList());
+                .toList();
     }
 }
