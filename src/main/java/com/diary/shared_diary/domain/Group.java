@@ -35,7 +35,9 @@ public class Group {
     private List<User> members;
 
     public void addMember(User user) {
-        this.members.add(user);
+        if (!this.members.contains(user)) {
+            this.members.add(user);
+        }
         if (!user.getGroups().contains(this)) {
             user.getGroups().add(this);
         }
