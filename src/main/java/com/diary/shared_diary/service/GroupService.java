@@ -10,6 +10,7 @@ import com.diary.shared_diary.repository.DiaryRepository;
 import com.diary.shared_diary.repository.GroupRepository;
 import com.diary.shared_diary.repository.UserRepository;
 import com.diary.shared_diary.util.CodeGenerator;
+import com.diary.shared_diary.util.S3Uploader;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -21,11 +22,13 @@ public class GroupService {
     private final GroupRepository groupRepository;
     private final UserRepository userRepository;
     private final DiaryRepository diaryRepository;
+    private final S3Uploader s3Uploader;
 
-    public GroupService(GroupRepository groupRepository, UserRepository userRepository, DiaryRepository diaryRepository) {
+    public GroupService(GroupRepository groupRepository, UserRepository userRepository, DiaryRepository diaryRepository, S3Uploader s3Uploader) {
         this.groupRepository = groupRepository;
         this.userRepository = userRepository;
         this.diaryRepository = diaryRepository;
+        this.s3Uploader = s3Uploader;
     }
 
     public List<GroupResponseDto> getGroupsByUserEmail(String email) {
@@ -51,7 +54,7 @@ public class GroupService {
         }
         List<Diary> diaries = diaryRepository.findByGroupOrderByCreatedAtDesc(group);
 
-        return new GroupDetailResponseDto(group, diaries);
+        return new GroupDetailResponseDto(group, diaries, s3Uploader);
     }
 
     public GroupResponseDto createGroup(String userEmail, GroupRequestDto dto) {
