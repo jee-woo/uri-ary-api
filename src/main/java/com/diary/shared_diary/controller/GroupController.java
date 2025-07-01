@@ -29,7 +29,7 @@ public class GroupController {
 
     @PostMapping("/join")
     public void joinGroup(@RequestBody @Valid JoinGroupRequestDto dto, @AuthenticationPrincipal CustomUserDetails userDetails) {
-        groupService.joinGroupByCode(dto.getCode(), userDetails.getUsername());
+        groupService.joinGroupByCode(dto.code(), userDetails.getUsername());
     }
 
 
@@ -54,6 +54,6 @@ public class GroupController {
             @PathVariable Long groupId,
             @RequestBody GroupMemberAddRequestDto dto
     ) {
-        groupService.addMembers(groupId, dto.getUserIds());
+        groupService.addMembers(groupId, dto.userIds());
     }
 }

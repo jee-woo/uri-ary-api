@@ -1,12 +1,7 @@
 package com.diary.shared_diary.dto.group;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-
-@Getter
-@AllArgsConstructor
-public class GroupResponseDto {
-    private Long id;
-    private String name;
-    private String code;
-}
+public record GroupResponseDto(
+        Long id,
+        String name,
+        String code
+) {}

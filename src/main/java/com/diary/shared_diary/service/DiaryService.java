@@ -46,8 +46,8 @@ public class DiaryService {
         }
 
         Diary diary = Diary.builder()
-                .title(dto.getTitle())
-                .content(dto.getContent())
+                .title(dto.title())
+                .content(dto.content())
                 .createdAt(LocalDateTime.now())
                 .author(author)
                 .group(group)
