@@ -43,11 +43,8 @@ public class GroupService {
     }
 
     public GroupDetailResponseDto getGroupDetail(Long groupId, String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        Group group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new RuntimeException("Group not found"));
+        Group group = groupRepository.getById(groupId);
+        User user = userRepository.getByEmail(email);
 
         if (!group.getMembers().contains(user)) {
             throw new RuntimeException("해당 그룹에 접근할 권한이 없습니다.");
