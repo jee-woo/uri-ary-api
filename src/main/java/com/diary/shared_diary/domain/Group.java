@@ -5,7 +5,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "groups")
@@ -32,14 +33,11 @@ public class Group {
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
     @JsonManagedReference
-    private List<User> members;
+    @Builder.Default
+    private Set<User> members = new HashSet<>();
 
     public void addMember(User user) {
-        if (!this.members.contains(user)) {
-            this.members.add(user);
-        }
-        if (!user.getGroups().contains(this)) {
-            user.getGroups().add(this);
-        }
+        this.members.add(user);
+        user.getGroups().add(this);
     }
 }

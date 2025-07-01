@@ -13,8 +13,13 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
 
     Optional<Group> findByCode(String code);
 
-    default @NonNull Group getById(Long id) {
+    default @NonNull Group getById(@NonNull Long id) {
         return findById(id)
+                .orElseThrow(() -> new RuntimeException("Group not found"));
+    }
+
+    default Group getByCode(String code) {
+        return findByCode(code)
                 .orElseThrow(() -> new RuntimeException("Group not found"));
     }
 }

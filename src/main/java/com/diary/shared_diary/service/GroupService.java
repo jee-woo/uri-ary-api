@@ -14,7 +14,9 @@ import com.diary.shared_diary.util.S3Uploader;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class GroupService {
@@ -68,7 +70,7 @@ public class GroupService {
                 .name(dto.name())
                 .code(code)
                 .createdAt(LocalDateTime.now())
-                .members(List.of(creator))
+                .members(new HashSet<>(Set.of(creator)))
                 .build();
 
         Group saved = groupRepository.save(group);
@@ -77,11 +79,8 @@ public class GroupService {
 
 
     public void joinGroupByCode(String code, String email) {
-        Group group = groupRepository.findByCode(code)
-                .orElseThrow(() -> new RuntimeException("해당 코드의 그룹이 없습니다"));
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("사용자 정보를 찾을 수 없습니다"));
+        Group group = groupRepository.getByCode(code);
+        User user = userRepository.getByEmail(email);
 
         if (!group.getMembers().contains(user)) {
             group.addMember(user);
@@ -97,14 +96,10 @@ public class GroupService {
 
         List<User> usersToAdd = userRepository.findAllById(userIds);
 
-        List<User> currentMembers = group.getMembers();
         for (User user : usersToAdd) {
-            if (!currentMembers.contains(user)) {
-                currentMembers.add(user);
-            }
+            group.addMember(user);
         }
 
-        group.setMembers(currentMembers);
         groupRepository.save(group);
     }
 
