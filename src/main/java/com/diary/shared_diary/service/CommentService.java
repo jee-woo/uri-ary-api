@@ -57,7 +57,7 @@ public class CommentService {
             throw new RuntimeException("해당 그룹 멤버만 댓글을 달 수 있습니다.");
         }
 
-        Comment parent = Optional.ofNullable(dto.getParentId())
+        Comment parent = Optional.ofNullable(dto.parentId())
                 .map(id -> {
                     Comment p = commentRepository.findById(id)
                             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 부모 댓글입니다."));
@@ -71,7 +71,7 @@ public class CommentService {
                 .orElse(null);
 
         Comment comment = Comment.builder()
-                .content(dto.getContent())
+                .content(dto.content())
                 .author(user)
                 .diary(diary)
                 .createdAt(LocalDateTime.now())

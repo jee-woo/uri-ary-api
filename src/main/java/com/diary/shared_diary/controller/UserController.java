@@ -1,6 +1,5 @@
 package com.diary.shared_diary.controller;
 
-import com.diary.shared_diary.domain.User;
 import com.diary.shared_diary.dto.user.UserRequestDto;
 import com.diary.shared_diary.dto.user.UserResponseDto;
 import com.diary.shared_diary.service.UserService;
