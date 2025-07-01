@@ -2,10 +2,12 @@ package com.diary.shared_diary.service;
 
 import com.diary.shared_diary.domain.Group;
 import com.diary.shared_diary.domain.User;
+import com.diary.shared_diary.dto.group.GroupDetailResponseDto;
 import com.diary.shared_diary.dto.group.GroupRequestDto;
 import com.diary.shared_diary.dto.group.GroupResponseDto;
 import com.diary.shared_diary.repository.GroupRepository;
 import com.diary.shared_diary.repository.UserRepository;
+import com.diary.shared_diary.util.CodeGenerator;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -29,24 +31,57 @@ public class GroupService {
         List<Group> groups = groupRepository.findAllByMembersContains(user);
 
         return groups.stream()
-                .map(group -> new GroupResponseDto(group.getId(), group.getName()))
+                .map(group -> new GroupResponseDto(group.getId(), group.getName(), group.getCode()))
                 .toList();
     }
 
-
-
-    public GroupResponseDto createGroup(GroupRequestDto dto, String email) {
-        User creator = userRepository.findByEmail(email)
+    public GroupDetailResponseDto getGroupDetail(Long groupId, String email) {
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Group not found"));
+
+        if (!group.getMembers().contains(user)) {
+            throw new RuntimeException("해당 그룹에 접근할 권한이 없습니다.");
+        }
+
+        return new GroupDetailResponseDto(group);
+    }
+
+    public GroupResponseDto createGroup(String userEmail, GroupRequestDto dto) {
+        User creator = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // ✅ 유일한 코드 생성
+        String code;
+        do {
+            code = CodeGenerator.generateGroupCode();
+        } while (groupRepository.findByCode(code).isPresent());
 
         Group group = Group.builder()
                 .name(dto.getName())
+                .code(code)
                 .createdAt(LocalDateTime.now())
                 .members(List.of(creator))
                 .build();
 
         Group saved = groupRepository.save(group);
-        return new GroupResponseDto(saved.getId(), saved.getName());
+        return new GroupResponseDto(saved.getId(), saved.getName(), code);
+    }
+
+
+    public void joinGroupByCode(String code, String email) {
+        Group group = groupRepository.findByCode(code)
+                .orElseThrow(() -> new RuntimeException("해당 코드의 그룹이 없습니다"));
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("사용자 정보를 찾을 수 없습니다"));
+
+        if (!group.getMembers().contains(user)) {
+            group.getMembers().add(user);
+            groupRepository.save(group);
+        }
     }
 
 
