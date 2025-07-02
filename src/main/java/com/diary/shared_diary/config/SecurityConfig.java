@@ -39,19 +39,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/groups/**", "/api/diaries/**").authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
-                        .successHandler((request, response, authentication) -> {
-                            if (authentication.getPrincipal() == null) {
-                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "OAuth2 인증 정보가 없습니다.");
-                                return;
-                            }
-                            OAuth2User oauthUser = (OAuth2User) authentication.getPrincipal();
-                            Map<String, Object> kakaoAccount = oauthUser.getAttribute("kakao_account");
-                            String email = (String) kakaoAccount.get("email");
-
-                            String token = jwtUtil.generateToken(email);
-                            String redirectUri = oAuth2Properties.getRedirectUri();
-                            response.sendRedirect(redirectUri + "?token=" + token);
-                        })
+                        .defaultSuccessUrl("/login/success", true)
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(e -> e
