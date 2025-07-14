@@ -26,6 +26,6 @@ public class GroupDetailResponseDto {
                 .collect(Collectors.toList());
         this.diaries = diaryList.stream()
                 .map(DiaryResponseDto::new)
-                .collect(Collectors.toList());
+                .toList();
     }
 }
