@@ -1,6 +1,7 @@
 package com.diary.shared_diary.controller;
 
 import com.diary.shared_diary.domain.User;
+import com.diary.shared_diary.dto.dev.CreateTestUserRequestDto;
 import com.diary.shared_diary.repository.UserRepository;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
@@ -24,9 +25,9 @@ public class DevUserController {
     }
 
     @PostMapping("/create-test-user")
-    public ResponseEntity<String> createTestUser(@RequestBody Map<String, String> body) {
-        String email = body.get("email");
-        String username = body.get("username");
+    public ResponseEntity<String> createTestUser(@RequestBody CreateTestUserRequestDto body) {
+        String email = body.email();
+        String username = body.username();
 
         if (userRepository.findByEmail(email).isPresent()) {
             return ResponseEntity.badRequest().body("이미 존재하는 사용자입니다.");

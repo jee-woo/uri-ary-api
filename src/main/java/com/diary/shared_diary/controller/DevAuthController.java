@@ -1,6 +1,8 @@
 package com.diary.shared_diary.controller;
 
 import com.diary.shared_diary.auth.JwtUtil;
+import com.diary.shared_diary.dto.dev.DevLoginRequestDto;
+import com.diary.shared_diary.dto.dev.DevLoginResponseDto;
 import com.diary.shared_diary.repository.UserRepository;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
@@ -23,15 +25,21 @@ public class DevAuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, String>> devLogin(@RequestBody Map<String, String> request) {
-        String email = request.get("email");
+    public ResponseEntity<DevLoginResponseDto> devLogin(@RequestBody DevLoginRequestDto request) {
+        String email = request.email();
 
-        if (!userRepository.existsByEmail(email)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "사용자 없음"));
-        }
-
-        String token = jwtUtil.generateToken(email);
-        return ResponseEntity.ok(Map.of("token", token));
+        return userRepository.findByEmail(email)
+                .map(user -> {
+                    String token = jwtUtil.generateToken(email);
+                    return ResponseEntity.ok(new DevLoginResponseDto(
+                            user.getEmail(),
+                            user.getUsername(),
+                            token
+                    ));
+                })
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
+
+
 }
 
