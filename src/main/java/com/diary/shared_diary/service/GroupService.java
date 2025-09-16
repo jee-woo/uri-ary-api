@@ -84,7 +84,7 @@ public class GroupService {
                 .orElseThrow(() -> new RuntimeException("사용자 정보를 찾을 수 없습니다"));
 
         if (!group.getMembers().contains(user)) {
-            group.getMembers().add(user);
+            group.addMember(user);
             groupRepository.save(group);
         }
     }

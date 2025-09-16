@@ -1,13 +1,12 @@
 package com.diary.shared_diary.controller;
 
 import com.diary.shared_diary.auth.CustomUserDetails;
+import com.diary.shared_diary.dto.diary.DiaryDetailResponseDto;
 import com.diary.shared_diary.dto.diary.DiaryRequestDto;
 import com.diary.shared_diary.dto.diary.DiaryResponseDto;
 import com.diary.shared_diary.service.DiaryService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/groups/{groupId}/diaries")
@@ -26,9 +25,12 @@ public class DiaryController {
         return diaryService.createDiary(groupId, userDetails.getUsername(), dto);
     }
 
-    @GetMapping
-    public List<DiaryResponseDto> getDiaries(@PathVariable Long groupId,
-                                             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        return diaryService.getDiariesByGroup(groupId, userDetails.getUsername());
+    @GetMapping("/{diaryId}")
+    public DiaryDetailResponseDto getDiaryDetail(
+            @PathVariable Long diaryId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        String email = userDetails.getUsername();
+        return diaryService.getDiaryDetail(diaryId, email);
     }
 }
