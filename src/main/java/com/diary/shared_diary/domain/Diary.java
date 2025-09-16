@@ -23,6 +23,9 @@ public class Diary {
 
     private LocalDateTime createdAt;
 
+    @Column
+    private String imagePath;
+
     @ManyToOne
     @JoinColumn(name = "group_id")
     private Group group;
