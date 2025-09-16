@@ -1,10 +1,12 @@
 package com.diary.shared_diary.service;
 
+import com.diary.shared_diary.domain.Diary;
 import com.diary.shared_diary.domain.Group;
 import com.diary.shared_diary.domain.User;
 import com.diary.shared_diary.dto.group.GroupDetailResponseDto;
 import com.diary.shared_diary.dto.group.GroupRequestDto;
 import com.diary.shared_diary.dto.group.GroupResponseDto;
+import com.diary.shared_diary.repository.DiaryRepository;
 import com.diary.shared_diary.repository.GroupRepository;
 import com.diary.shared_diary.repository.UserRepository;
 import com.diary.shared_diary.util.CodeGenerator;
@@ -18,10 +20,12 @@ public class GroupService {
 
     private final GroupRepository groupRepository;
     private final UserRepository userRepository;
+    private final DiaryRepository diaryRepository;
 
-    public GroupService(GroupRepository groupRepository, UserRepository userRepository) {
+    public GroupService(GroupRepository groupRepository, UserRepository userRepository, DiaryRepository diaryRepository) {
         this.groupRepository = groupRepository;
         this.userRepository = userRepository;
+        this.diaryRepository = diaryRepository;
     }
 
     public List<GroupResponseDto> getGroupsByUserEmail(String email) {
@@ -45,8 +49,9 @@ public class GroupService {
         if (!group.getMembers().contains(user)) {
             throw new RuntimeException("해당 그룹에 접근할 권한이 없습니다.");
         }
+        List<Diary> diaries = diaryRepository.findByGroupOrderByCreatedAtDesc(group);
 
-        return new GroupDetailResponseDto(group);
+        return new GroupDetailResponseDto(group, diaries);
     }
 
     public GroupResponseDto createGroup(String userEmail, GroupRequestDto dto) {
@@ -60,7 +65,7 @@ public class GroupService {
         } while (groupRepository.findByCode(code).isPresent());
 
         Group group = Group.builder()
-                .name(dto.getName())
+                .name(dto.name())
                 .code(code)
                 .createdAt(LocalDateTime.now())
                 .members(List.of(creator))
