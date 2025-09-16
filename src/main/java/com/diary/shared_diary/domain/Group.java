@@ -9,7 +9,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "groups")
+@Table(name = "user_group")
 @Getter
 @Setter
 @NoArgsConstructor

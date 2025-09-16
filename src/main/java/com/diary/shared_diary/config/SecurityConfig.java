@@ -5,13 +5,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
-import java.util.Map;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
@@ -39,19 +36,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/groups/**", "/api/diaries/**").authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
-                        .successHandler((request, response, authentication) -> {
-                            if (authentication.getPrincipal() == null) {
-                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "OAuth2 인증 정보가 없습니다.");
-                                return;
-                            }
-                            OAuth2User oauthUser = (OAuth2User) authentication.getPrincipal();
-                            Map<String, Object> kakaoAccount = oauthUser.getAttribute("kakao_account");
-                            String email = (String) kakaoAccount.get("email");
-
-                            String token = jwtUtil.generateToken(email);
-                            String redirectUri = oAuth2Properties.getRedirectUri();
-                            response.sendRedirect(redirectUri + "?token=" + token);
-                        })
+                        .defaultSuccessUrl("/login/success", true)
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(e -> e
