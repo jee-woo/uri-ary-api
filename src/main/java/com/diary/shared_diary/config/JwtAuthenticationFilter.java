@@ -33,8 +33,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String email = jwtUtil.validateAndGetEmail(token); // 유효성 검사 및 이메일 추출
             if (email != null) {
                 CustomUserDetails userDetails = new CustomUserDetails(email);
-
-
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
