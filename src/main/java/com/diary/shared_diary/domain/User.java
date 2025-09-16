@@ -1,5 +1,6 @@
 package com.diary.shared_diary.domain;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
@@ -19,7 +20,6 @@ public class User {
 
     private String username;
     private String email;
-    private String password;
 
     private LocalDateTime createdAt;
 
@@ -32,6 +32,7 @@ public class User {
     private List<Comment> comments;
 
     @ManyToMany(mappedBy = "members")
+    @JsonBackReference
     private List<Group> groups;
 
 }

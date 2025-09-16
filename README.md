@@ -50,6 +50,11 @@
 | `comment`    | 댓글 및 대댓글 테이블<br>`diary_id`, `user_id`, `parent_id`(대댓글 여부 판별) 등 포함                                                   |
 
 
+### 🧩 ERD
+
+![ERD](https://github.com/user-attachments/assets/e2959342-736c-45f7-af5c-654b7fc3a4f8)
+
+
 ---
 
 ## 🖼️ 이미지 처리

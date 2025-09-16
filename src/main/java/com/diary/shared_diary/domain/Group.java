@@ -1,5 +1,6 @@
 package com.diary.shared_diary.domain;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -19,6 +20,8 @@ public class Group {
     private Long id;
 
     private String name;
+    @Column(unique = true)
+    private String code;
 
     private LocalDateTime createdAt;
 
@@ -28,5 +31,6 @@ public class Group {
             joinColumns = @JoinColumn(name = "group_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
+    @JsonManagedReference
     private List<User> members;
 }

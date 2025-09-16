@@ -11,5 +11,5 @@ public interface DiaryRepository extends JpaRepository<Diary, Long> {
     List<Diary> findByAuthor(User author);
 
     List<Diary> findByGroup(Group group);
-
+    List<Diary> findByGroupOrderByCreatedAtDesc(Group group);
 }
