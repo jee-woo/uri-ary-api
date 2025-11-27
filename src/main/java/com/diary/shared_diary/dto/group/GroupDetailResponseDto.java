@@ -8,7 +8,6 @@ import com.diary.shared_diary.util.S3Uploader;
 import lombok.Getter;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Getter
 public class GroupDetailResponseDto {
@@ -24,10 +23,9 @@ public class GroupDetailResponseDto {
         this.code = group.getCode();
         this.members = group.getMembers().stream()
                 .map(UserResponseDto::new)
-                .collect(Collectors.toList());
+                .toList();
         this.diaries = diaryList.stream()
                 .map(diary -> new DiaryResponseDto(diary, uploader))
-                .collect(Collectors.toList());
+                .toList();
     }
-
 }
