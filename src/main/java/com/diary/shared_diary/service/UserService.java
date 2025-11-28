@@ -20,8 +20,8 @@ public class UserService {
 
     public UserResponseDto createUser(UserRequestDto dto) {
         User user = User.builder()
-                .username(dto.getUsername())
-                .email(dto.getEmail())
+                .username(dto.username())
+                .email(dto.email())
                 .createdAt(LocalDateTime.now())
                 .build();
 

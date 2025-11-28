@@ -6,17 +6,22 @@ import lombok.Getter;
 
 import java.time.LocalDateTime;
 
-@Getter
-public class DiaryResponseDto {
+import com.diary.shared_diary.dto.comment.CommentResponseDto;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Getter
+public class DiaryDetailResponseDto {
     private Long id;
     private String title;
     private String content;
     private String authorUsername;
     private LocalDateTime createdAt;
     private String imageUrl;
+    private List<CommentResponseDto> comments;
 
-    public DiaryResponseDto(Diary diary, S3Uploader uploader) {
+    public DiaryDetailResponseDto(Diary diary, S3Uploader uploader) {
         this.id = diary.getId();
         this.title = diary.getTitle();
         this.content = diary.getContent();
@@ -25,5 +30,8 @@ public class DiaryResponseDto {
         this.imageUrl = diary.getImagePath() != null
                 ? uploader.getPresignedUrl(diary.getImagePath())
                 : null;
+        this.comments = diary.getComments().stream()
+                .map(CommentResponseDto::new)
+                .collect(Collectors.toList());
     }
 }
