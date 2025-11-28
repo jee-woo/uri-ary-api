@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Getter
@@ -22,6 +23,9 @@ public class Diary {
 
     private LocalDateTime createdAt;
 
+    @Column
+    private String imagePath;
+
     @ManyToOne
     @JoinColumn(name = "group_id")
     private Group group;
@@ -29,4 +33,8 @@ public class Diary {
     @ManyToOne
     @JoinColumn(name = "author_id")
     private User author;
+
+    @OneToMany(mappedBy = "diary", cascade = CascadeType.ALL)
+    private List<Comment> comments;
+
 }
