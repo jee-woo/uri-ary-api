@@ -4,6 +4,7 @@ import com.diary.shared_diary.domain.Diary;
 import com.diary.shared_diary.domain.Group;
 import com.diary.shared_diary.dto.diary.DiaryResponseDto;
 import com.diary.shared_diary.dto.user.UserResponseDto;
+import com.diary.shared_diary.util.S3Uploader;
 import lombok.Getter;
 
 import java.util.List;
@@ -16,7 +17,7 @@ public class GroupDetailResponseDto {
     private List<UserResponseDto> members;
     private List<DiaryResponseDto> diaries;
 
-    public GroupDetailResponseDto(Group group, List<Diary> diaryList) {
+    public GroupDetailResponseDto(Group group, List<Diary> diaryList, S3Uploader uploader) {
         this.id = group.getId();
         this.name = group.getName();
         this.code = group.getCode();
@@ -24,7 +25,7 @@ public class GroupDetailResponseDto {
                 .map(UserResponseDto::new)
                 .toList();
         this.diaries = diaryList.stream()
-                .map(DiaryResponseDto::new)
+                .map(diary -> new DiaryResponseDto(diary, uploader))
                 .toList();
     }
 }
