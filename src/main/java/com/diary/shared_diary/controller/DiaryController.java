@@ -23,11 +23,10 @@ public class DiaryController {
     @PostMapping
     public ResponseEntity<DiaryResponseDto> createDiary(
             @PathVariable Long groupId,
-            @RequestPart("diary") DiaryRequestDto dto,
-            @RequestPart(value = "image", required = false) MultipartFile image,
+            @ModelAttribute DiaryRequestDto dto,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        DiaryResponseDto result = diaryService.createDiary(groupId, userDetails.getUsername(), dto, image);
+        DiaryResponseDto result = diaryService.createDiary(groupId, userDetails.getUsername(), dto, dto.getImage());
         return ResponseEntity.ok(result);
     }
 
