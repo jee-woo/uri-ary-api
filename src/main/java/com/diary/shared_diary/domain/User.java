@@ -23,6 +23,11 @@ public class User {
     private String username;
     private String email;
 
+    private String refreshToken;
+
+    private String authorizationCode;
+    private LocalDateTime authorizationCodeExpiresAt;
+
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "author")

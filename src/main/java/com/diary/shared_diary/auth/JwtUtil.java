@@ -15,17 +15,26 @@ public class JwtUtil {
     @Value("${jwt.secret}")
     private String secret;
 
-    private static final long EXPIRATION_MS = 1000 * 60 * 60 * 24; // 24시간
+    private static final long ACCESS_TOKEN_EXPIRATION_MS = 1000 * 60 * 60 * 24; // 24시간
+    private static final long REFRESH_TOKEN_EXPIRATION_MS = 1000L * 60 * 60 * 24 * 30; // 30일
 
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
     }
 
-    public String generateToken(String email) {
+    public String generateAccessToken(String email) {
+        return generateToken(email, ACCESS_TOKEN_EXPIRATION_MS);
+    }
+
+    public String generateRefreshToken(String email) {
+        return generateToken(email, REFRESH_TOKEN_EXPIRATION_MS);
+    }
+
+    private String generateToken(String email, long expirationMs) {
         return Jwts.builder()
                 .setSubject(email)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_MS))
+                .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }

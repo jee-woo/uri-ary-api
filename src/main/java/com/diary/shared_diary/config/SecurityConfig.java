@@ -19,6 +19,7 @@ public class SecurityConfig {
 
     private final JwtUtil jwtUtil;
     private final OAuth2Properties oAuth2Properties;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -32,13 +33,13 @@ public class SecurityConfig {
                         .disable()
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login/**", "/oauth2/**", "/login/oauth2/**", "/h2-console/**", "/dev/**").permitAll()
+                        .requestMatchers("/login/**", "/oauth2/**", "/login/oauth2/**", "/h2-console/**", "/dev/**", "/api/auth/refresh", "/api/auth/token").permitAll()
                         .requestMatchers("/api/groups/**", "/api/diaries/**").authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
                         .defaultSuccessUrl("/login/success", true)
                 )
-                .addFilterBefore(new JwtAuthenticationFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(e -> e
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "인증이 필요합니다.");
