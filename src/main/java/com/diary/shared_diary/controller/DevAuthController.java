@@ -30,11 +30,15 @@ public class DevAuthController {
 
         return userRepository.findByEmail(email)
                 .map(user -> {
-                    String token = jwtUtil.generateToken(email);
+                    String accessToken = jwtUtil.generateAccessToken(email);
+                    String refreshToken = jwtUtil.generateRefreshToken(email);
+                    user.setRefreshToken(refreshToken);
+                    userRepository.save(user);
                     return ResponseEntity.ok(new DevLoginResponseDto(
                             user.getEmail(),
                             user.getUsername(),
-                            token
+                            accessToken,
+                            refreshToken
                     ));
                 })
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
