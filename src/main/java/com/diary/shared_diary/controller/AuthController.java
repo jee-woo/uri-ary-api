@@ -72,22 +72,6 @@ public class AuthController {
 
         return ResponseEntity.ok(new LoginSuccessResponseDto(accessToken, refreshToken));
     }
-//
-//    @PostMapping("/api/auth/refresh")
-//    public ResponseEntity<LoginSuccessResponseDto> refreshToken(@RequestBody Map<String, String> request) {
-//        String refreshToken = request.get("refreshToken");
-//        String email = jwtUtil.validateAndGetEmail(refreshToken);
-//        User user = userRepository.findByRefreshToken(refreshToken)
-//                .orElseThrow(() -> new IllegalArgumentException("Invalid refresh token"));
-//
-//        if (!email.equals(user.getEmail())) {
-//            throw new IllegalArgumentException("Invalid refresh token");
-//        }
-//
-//        String newAccessToken = jwtUtil.generateAccessToken(email);
-//        return ResponseEntity.ok(new LoginSuccessResponseDto(newAccessToken, refreshToken));
-//    }
-
 
     @PostMapping("/api/auth/refresh")
     public ResponseEntity<LoginSuccessResponseDto> refreshToken(@RequestBody Map<String, String> request) {
