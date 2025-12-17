@@ -6,6 +6,7 @@ import com.diary.shared_diary.domain.User;
 import com.diary.shared_diary.dto.auth.LoginSuccessResponseDto;
 import com.diary.shared_diary.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +18,7 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 public class AuthController {
@@ -28,6 +30,7 @@ public class AuthController {
     @GetMapping("/login/success")
     public void loginSuccess(@AuthenticationPrincipal OAuth2User oauth2User, HttpServletResponse response) throws IOException {
         if (oauth2User == null) {
+            log.warn("[AUTH-LOGIN-FAIL] Authentication failed, OAuth2User is null.");
             response.sendError(401, "인증 실패");
             return;
         }
@@ -35,18 +38,23 @@ public class AuthController {
         Map<String, Object> kakaoAccount = (Map<String, Object>) oauth2User.getAttribute("kakao_account");
         String email = (String) kakaoAccount.get("email");
         String nickname = (String) ((Map<String, Object>) kakaoAccount.get("profile")).get("nickname");
+        log.info("[AUTH-LOGIN-SUCCESS] User logged in successfully: {}", email);
 
         User user = userRepository.findByEmail(email)
-                .orElseGet(() -> userRepository.save(User.builder()
+                .orElseGet(() -> {
+                    log.info("New user detected, creating a new user account for: {}", email);
+                    return userRepository.save(User.builder()
                         .email(email)
                         .username(nickname)
                         .createdAt(LocalDateTime.now())
-                        .build()));
+                        .build());
+                });
 
         String authorizationCode = UUID.randomUUID().toString();
         user.setAuthorizationCode(authorizationCode);
         user.setAuthorizationCodeExpiresAt(LocalDateTime.now().plusMinutes(1)); // 1분 후 만료
         userRepository.save(user);
+        log.info("Generated authorization code for user: {}", email);
 
         String redirectUri = oAuth2Properties.getRedirectUri();
         response.sendRedirect(redirectUri + "?code=" + authorizationCode);
@@ -55,10 +63,12 @@ public class AuthController {
     @PostMapping("/api/auth/token")
     public ResponseEntity<LoginSuccessResponseDto> exchangeCodeForTokens(@RequestBody Map<String, String> request) {
         String authorizationCode = request.get("code");
+        log.info("[AUTH-TOKEN-EXCHANGE] Attempting to exchange authorization code for tokens.");
         User user = userRepository.findByAuthorizationCode(authorizationCode)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid authorization code"));
 
         if (user.getAuthorizationCodeExpiresAt().isBefore(LocalDateTime.now())) {
+            log.warn("[AUTH-TOKEN-EXCHANGE] Authorization code has expired for user: {}", user.getEmail());
             throw new IllegalArgumentException("Authorization code has expired");
         }
 
@@ -69,6 +79,7 @@ public class AuthController {
         String refreshToken = jwtUtil.generateRefreshToken(user.getEmail());
         user.setRefreshToken(refreshToken);
         userRepository.save(user);
+        log.info("[AUTH-TOKEN-EXCHANGE] Successfully exchanged code for tokens for user: {}", user.getEmail());
 
         return ResponseEntity.ok(new LoginSuccessResponseDto(accessToken, refreshToken));
     }
@@ -76,6 +87,7 @@ public class AuthController {
     @PostMapping("/api/auth/refresh")
     public ResponseEntity<LoginSuccessResponseDto> refreshToken(@RequestBody Map<String, String> request) {
         String oldRefreshToken = request.get("refreshToken");
+        log.info("[AUTH-TOKEN-REFRESH] Attempting to refresh token.");
 
         // 1. JWT 유효성 검사 및 사용자 이메일 추출
         String email = jwtUtil.validateAndGetEmail(oldRefreshToken);
@@ -86,6 +98,7 @@ public class AuthController {
 
         if (!email.equals(user.getEmail())) {
             // 토큰 내부의 이메일과 DB에 저장된 사용자의 이메일이 다르면 비정상 접근
+            log.warn("[AUTH-TOKEN-REFRESH] Mismatched refresh token owner. Token email: {}, User email: {}", email, user.getEmail());
             throw new IllegalArgumentException("Mismatched refresh token owner");
         }
 
@@ -98,6 +111,7 @@ public class AuthController {
         // 4. DB에 새로운 리프레시 토큰 저장 (기존 토큰 폐기 효과)
         user.setRefreshToken(newRefreshToken);
         userRepository.save(user);
+        log.info("[AUTH-TOKEN-REFRESH] Successfully refreshed token for user: {}", email);
 
         // 5. 새로운 액세스 토큰과 새로운 리프레시 토큰을 클라이언트에 전달
         return ResponseEntity.ok(new LoginSuccessResponseDto(newAccessToken, newRefreshToken));
