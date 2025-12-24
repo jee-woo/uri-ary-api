@@ -1,6 +1,6 @@
 package com.diary.shared_diary.service;
 
-import com.amazonaws.services.kms.model.NotFoundException;
+import com.diary.shared_diary.exception.NotFoundException;
 import com.diary.shared_diary.domain.Comment;
 import com.diary.shared_diary.domain.Diary;
 import com.diary.shared_diary.domain.Group;
