@@ -52,7 +52,10 @@ public class DiaryService {
 
         Diary diary = Diary.builder()
                 .title(dto.getTitle())
-                .content(dto.getContent())
+                .encryptedContent(dto.getEncryptedContent())
+                .iv(dto.getIv())
+                .authTag(dto.getAuthTag())
+                .encryptedAesKey(dto.getEncryptedAesKey())
                 .createdAt(LocalDateTime.now())
                 .author(author)
                 .group(group)

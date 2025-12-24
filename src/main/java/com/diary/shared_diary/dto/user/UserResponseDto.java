@@ -5,9 +5,14 @@ import com.diary.shared_diary.domain.User;
 public record UserResponseDto(
         Long id,
         String username,
-        String email
+        String email,
+        String publicKey
 ) {
     public UserResponseDto(User user) {
-        this(user.getId(), user.getUsername(), user.getEmail());
+        this(user.getId(), user.getUsername(), user.getEmail(), user.getPublicKey());
+    }
+
+    public static UserResponseDto from(User user) {
+        return new UserResponseDto(user);
     }
 }

@@ -15,16 +15,19 @@ import java.util.stream.Collectors;
 public class DiaryDetailResponseDto {
     private Long id;
     private String title;
-    private String content;
+    private String encryptedContent;
     private String authorUsername;
     private LocalDateTime createdAt;
     private String imageUrl;
     private List<CommentResponseDto> comments;
+    private String iv;
+    private String authTag;
+    private String encryptedAesKey;
 
     public DiaryDetailResponseDto(Diary diary, S3Uploader uploader) {
         this.id = diary.getId();
         this.title = diary.getTitle();
-        this.content = diary.getContent();
+        this.encryptedContent = diary.getEncryptedContent();
         this.authorUsername = diary.getAuthor().getUsername();
         this.createdAt = diary.getCreatedAt();
         this.imageUrl = diary.getImagePath() != null
@@ -33,5 +36,9 @@ public class DiaryDetailResponseDto {
         this.comments = diary.getComments().stream()
                 .map(CommentResponseDto::new)
                 .collect(Collectors.toList());
+
+        this.iv = diary.getIv();
+        this.authTag = diary.getAuthTag();
+        this.encryptedAesKey = diary.getEncryptedAesKey();
     }
 }

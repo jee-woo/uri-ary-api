@@ -23,6 +23,9 @@ public class User {
     private String username;
     private String email;
 
+    @Column(columnDefinition = "TEXT")
+    private String publicKey;
+
     private String refreshToken;
 
     private String authorizationCode;

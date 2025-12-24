@@ -6,6 +6,7 @@ import com.diary.shared_diary.dto.user.UserResponseDto;
 import com.diary.shared_diary.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,7 +31,15 @@ public class UserService {
 
         User saved = userRepository.save(user);
         log.info("User created with id: {}", saved.getId());
-        return new UserResponseDto(saved.getId(), saved.getUsername(), saved.getEmail());
+        return new UserResponseDto(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public UserResponseDto getUserResponseByEmail(String email) {
+        log.info("Fetching user profile for email: {}", email);
+
+        User user = userRepository.getByEmailOrThrow(email);
+        return UserResponseDto.from(user);
     }
 
     public List<UserResponseDto> getAllUsers() {
@@ -39,7 +48,8 @@ public class UserService {
                 .map(user -> new UserResponseDto(
                         user.getId(),
                         user.getUsername(),
-                        user.getEmail()
+                        user.getEmail(),
+                        user.getPublicKey()
                 ))
                 .toList();
         log.info("Found {} users.", users.size());
@@ -52,5 +62,11 @@ public class UserService {
         boolean exists = userRepository.existsByEmail(email);
         log.info("Email {} exists: {}", email, exists);
         return exists;
+    }
+
+    @Transactional
+    public void updatePublicKey(String email, String publicKey) {
+        User user = userRepository.getByEmailOrThrow(email);
+        user.setPublicKey(publicKey);
     }
 }

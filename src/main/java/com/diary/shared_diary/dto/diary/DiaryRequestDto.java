@@ -8,6 +8,10 @@ import org.springframework.web.multipart.MultipartFile;
 @Setter
 public class DiaryRequestDto {
     private String title;
-    private String content;
+    private String encryptedContent;
     private MultipartFile image;
+
+    private String iv;
+    private String authTag;
+    private String encryptedAesKey;
 }
