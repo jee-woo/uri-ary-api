@@ -42,19 +42,14 @@ public class UserService {
         return UserResponseDto.from(user);
     }
 
-    public List<UserResponseDto> getAllUsers() {
-        log.info("Fetching all users.");
-        List<UserResponseDto> users = userRepository.findAll().stream()
-                .map(user -> new UserResponseDto(
-                        user.getId(),
-                        user.getUsername(),
-                        user.getEmail(),
-                        user.getPublicKey()
-                ))
-                .toList();
-        log.info("Found {} users.", users.size());
-        return users;
-    }
+//    public List<UserResponseDto> getAllUsers() {
+//        log.info("Fetching all users.");
+//        List<UserResponseDto> users = userRepository.findAll().stream()
+//                .map(UserResponseDto::from)
+//                .toList();
+//        log.info("Found {} users.", users.size());
+//        return users;
+//    }
 
 
     public boolean isEmailExists(String email) {

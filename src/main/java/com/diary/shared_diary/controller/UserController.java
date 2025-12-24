@@ -32,11 +32,11 @@ public class UserController {
     }
 
 
-    @GetMapping
-    public List<UserResponseDto> getUsers() {
-        log.info("[USER-GET-ALL] Request to get all users.");
-        return userService.getAllUsers();
-    }
+//    @GetMapping
+//    public List<UserResponseDto> getUsers() {
+//        log.info("[USER-GET-ALL] Request to get all users.");
+//        return userService.getAllUsers();
+//    }
 
     @GetMapping("/me")
     public ResponseEntity<UserResponseDto> getCurrentUser(@AuthenticationPrincipal CustomUserDetails userDetails) {
