@@ -4,6 +4,8 @@ import com.diary.shared_diary.auth.JwtUtil;
 import com.diary.shared_diary.config.OAuth2Properties;
 import com.diary.shared_diary.domain.User;
 import com.diary.shared_diary.dto.auth.LoginSuccessResponseDto;
+import com.diary.shared_diary.dto.user.UserResponseDto;
+import com.diary.shared_diary.exception.InvalidTokenException;
 import com.diary.shared_diary.repository.UserRepository;
 import io.jsonwebtoken.ExpiredJwtException;
 import lombok.RequiredArgsConstructor;
@@ -82,8 +84,9 @@ public class AuthController {
         user.setRefreshToken(refreshToken);
         userRepository.save(user);
         log.info("[AUTH-TOKEN-EXCHANGE] Successfully exchanged code for tokens for user: {}", user.getEmail());
+        UserResponseDto userResponse = UserResponseDto.from(user);
 
-        return ResponseEntity.ok(new LoginSuccessResponseDto(accessToken, refreshToken));
+        return ResponseEntity.ok(new LoginSuccessResponseDto(accessToken, refreshToken, userResponse));
     }
 
     @PostMapping("/api/auth/refresh")
@@ -97,12 +100,12 @@ public class AuthController {
 
             // 2. DB에서 리프레시 토큰 일치 여부 확인 (토큰 소유자 확인)
             User user = userRepository.findByRefreshToken(oldRefreshToken)
-                    .orElseThrow(() -> new IllegalArgumentException("Invalid or Expired refresh token"));
+                    .orElseThrow(() -> new InvalidTokenException("Invalid or Expired refresh token"));
 
             if (!email.equals(user.getEmail())) {
                 // 토큰 내부의 이메일과 DB에 저장된 사용자의 이메일이 다르면 비정상 접근
                 log.warn("[AUTH-TOKEN-REFRESH] Mismatched refresh token owner. Token email: {}, User email: {}", email, user.getEmail());
-                throw new IllegalArgumentException("Mismatched refresh token owner");
+                throw new InvalidTokenException(("Mismatched refresh token owner"));
             }
 
             // --- 리프레시 토큰 로테이션 (RTR) 적용 시작 ---
@@ -116,8 +119,10 @@ public class AuthController {
             userRepository.save(user);
             log.info("[AUTH-TOKEN-REFRESH] Successfully refreshed token for user: {}", email);
 
+            UserResponseDto userResponse = UserResponseDto.from(user);
+
             // 5. 새로운 액세스 토큰과 새로운 리프레시 토큰을 클라이언트에 전달
-            return ResponseEntity.ok(new LoginSuccessResponseDto(newAccessToken, newRefreshToken));
+            return ResponseEntity.ok(new LoginSuccessResponseDto(newAccessToken, newRefreshToken, userResponse));
 
             // --- RTR 적용 완료 ---
         } catch (ExpiredJwtException e) {

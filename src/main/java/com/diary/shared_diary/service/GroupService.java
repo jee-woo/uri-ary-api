@@ -6,13 +6,16 @@ import com.diary.shared_diary.domain.User;
 import com.diary.shared_diary.dto.group.GroupDetailResponseDto;
 import com.diary.shared_diary.dto.group.GroupRequestDto;
 import com.diary.shared_diary.dto.group.GroupResponseDto;
+import com.diary.shared_diary.exception.NotFoundException;
 import com.diary.shared_diary.repository.DiaryRepository;
 import com.diary.shared_diary.repository.GroupRepository;
 import com.diary.shared_diary.repository.UserRepository;
 import com.diary.shared_diary.util.CodeGenerator;
 import com.diary.shared_diary.util.S3Uploader;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -37,9 +40,7 @@ public class GroupService {
 
     public List<GroupResponseDto> getGroupsByUserEmail(String email) {
         log.info("Fetching groups for user: {}", email);
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
+        User user = userRepository.getByEmailOrThrow(email);
         List<Group> groups = groupRepository.findAllByMembersContains(user);
         log.info("Found {} groups for user: {}", groups.size(), email);
         return groups.stream()
@@ -49,13 +50,11 @@ public class GroupService {
 
     public GroupDetailResponseDto getGroupDetail(Long groupId, String email) {
         log.info("Fetching group detail for groupId: {}, user: {}", groupId, email);
-        Group group = groupRepository.getById(groupId);
-        User user = userRepository.getByEmail(email);
+        Group group = groupRepository.getOrThrow(groupId);
+        User user = userRepository.getByEmailOrThrow(email);
 
-        if (!group.getMembers().contains(user)) {
-            log.warn("User {} is not a member of group {}. Access denied.", email, groupId);
-            throw new RuntimeException("해당 그룹에 접근할 권한이 없습니다.");
-        }
+        group.validateMember(user);
+
         List<Diary> diaries = diaryRepository.findByGroupOrderByCreatedAtDesc(group);
 
         log.info("Successfully fetched group detail for groupId: {}", groupId);
@@ -64,10 +63,8 @@ public class GroupService {
 
     public GroupResponseDto createGroup(String userEmail, GroupRequestDto dto) {
         log.info("Creating group for user: {}", userEmail);
-        User creator = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        User creator = userRepository.getByEmailOrThrow(userEmail);
 
-        // ✅ 유일한 코드 생성
         String code;
         do {
             code = CodeGenerator.generateGroupCode();
@@ -86,11 +83,11 @@ public class GroupService {
         return new GroupResponseDto(saved.getId(), saved.getName(), code);
     }
 
-
+    @Transactional
     public void joinGroupByCode(String code, String email) {
         log.info("User {} attempts to join group with code: {}", email, code);
-        Group group = groupRepository.getByCode(code);
-        User user = userRepository.getByEmail(email);
+        Group group = groupRepository.getByCodeOrThrow(code);
+        User user = userRepository.getByEmailOrThrow(email);
 
         if (!group.getMembers().contains(user)) {
             group.addMember(user);
@@ -102,19 +99,16 @@ public class GroupService {
     }
 
 
-
+    @Transactional
     public void addMembers(Long groupId, List<Long> userIds) {
         log.info("Adding members to group: {}", groupId);
-        Group group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new RuntimeException("Group not found"));
-
+        Group group = groupRepository.getOrThrow(groupId);
         List<User> usersToAdd = userRepository.findAllById(userIds);
 
         for (User user : usersToAdd) {
             group.addMember(user);
         }
 
-        groupRepository.save(group);
         log.info("Successfully added {} members to group: {}", usersToAdd.size(), groupId);
     }
 

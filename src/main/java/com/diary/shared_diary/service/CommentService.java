@@ -1,5 +1,6 @@
 package com.diary.shared_diary.service;
 
+import com.amazonaws.services.kms.model.NotFoundException;
 import com.diary.shared_diary.domain.Comment;
 import com.diary.shared_diary.domain.Diary;
 import com.diary.shared_diary.domain.Group;
@@ -10,6 +11,7 @@ import com.diary.shared_diary.repository.CommentRepository;
 import com.diary.shared_diary.repository.DiaryRepository;
 import com.diary.shared_diary.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -35,14 +37,14 @@ public class CommentService {
     public List<CommentResponseDto> getComments(Long diaryId, String email) {
         log.info("Fetching comments for diaryId: {}, user: {}", diaryId, email);
         Diary diary = diaryRepository.findById(diaryId)
-                .orElseThrow(() -> new RuntimeException("일기를 찾을 수 없습니다."));
+                .orElseThrow(() -> new NotFoundException("일기를 찾을 수 없습니다."));
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
 
         Group group = diary.getGroup();
         if (!group.getMembers().contains(user)) {
             log.warn("User {} is not a member of group {}. Access denied for diary {}.", email, diary.getGroup().getId(), diaryId);
-            throw new RuntimeException("댓글을 볼 수 있는 권한이 없습니다.");
+            throw new AccessDeniedException("댓글을 볼 수 있는 권한이 없습니다.");
         }
 
         log.info("Successfully fetched comments for diaryId: {}", diaryId);
@@ -54,14 +56,14 @@ public class CommentService {
     public CommentResponseDto createComment(Long diaryId, String email, CommentRequestDto dto) {
         log.info("Start creating comment for user: {}, diary: {}", email, diaryId);
         Diary diary = diaryRepository.findById(diaryId)
-                .orElseThrow(() -> new RuntimeException("일기를 찾을 수 없습니다."));
+                .orElseThrow(() -> new NotFoundException("일기를 찾을 수 없습니다."));
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new NotFoundException("사용자를 찾을 수 없습니다."));
 
         Group group = diary.getGroup();
         if (!group.getMembers().contains(user)) {
             log.warn("User {} is not a member of group {}. Access denied for diary {}.", email, diary.getGroup().getId(), diaryId);
-            throw new RuntimeException("해당 그룹 멤버만 댓글을 달 수 있습니다.");
+            throw new AccessDeniedException("해당 그룹 멤버만 댓글을 달 수 있습니다.");
         }
 
         Comment parent = Optional.ofNullable(dto.parentId())
@@ -87,6 +89,6 @@ public class CommentService {
 
         Comment saved = commentRepository.save(comment);
         log.info("Comment created with id: {}", saved.getId());
-        return new CommentResponseDto(comment);
+        return new CommentResponseDto(saved);
     }
 }
