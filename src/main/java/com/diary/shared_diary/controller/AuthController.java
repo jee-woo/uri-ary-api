@@ -105,7 +105,7 @@ public class AuthController {
             if (!email.equals(user.getEmail())) {
                 // 토큰 내부의 이메일과 DB에 저장된 사용자의 이메일이 다르면 비정상 접근
                 log.warn("[AUTH-TOKEN-REFRESH] Mismatched refresh token owner. Token email: {}, User email: {}", email, user.getEmail());
-                throw new InvalidTokenException(("Mismatched refresh token owner"));
+                throw new InvalidTokenException("Mismatched refresh token owner");
             }
 
             // --- 리프레시 토큰 로테이션 (RTR) 적용 시작 ---
