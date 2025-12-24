@@ -19,7 +19,7 @@ public class Diary {
     private String title;
 
     @Column(columnDefinition = "TEXT")
-    private String content;
+    private String encryptedContent;
 
     private LocalDateTime createdAt;
 
@@ -37,4 +37,9 @@ public class Diary {
     @OneToMany(mappedBy = "diary", cascade = CascadeType.ALL)
     private List<Comment> comments;
 
+    private String iv;
+    private String authTag;
+
+    @Column(columnDefinition = "TEXT")
+    private String encryptedAesKey;
 }

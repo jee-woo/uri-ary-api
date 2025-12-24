@@ -6,11 +6,13 @@ import com.diary.shared_diary.domain.User;
 import com.diary.shared_diary.dto.diary.DiaryDetailResponseDto;
 import com.diary.shared_diary.dto.diary.DiaryRequestDto;
 import com.diary.shared_diary.dto.diary.DiaryResponseDto;
+import com.diary.shared_diary.exception.NotFoundException;
 import com.diary.shared_diary.repository.DiaryRepository;
 import com.diary.shared_diary.repository.GroupRepository;
 import com.diary.shared_diary.repository.UserRepository;
 import com.diary.shared_diary.util.S3Uploader;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -34,14 +36,12 @@ public class DiaryService {
 
     public DiaryResponseDto createDiary(Long groupId, String email, DiaryRequestDto dto, MultipartFile image) {
         log.info("Start creating diary for user: {}, group: {}", email, groupId);
-        User author = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        Group group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new RuntimeException("Group not found"));
+        User author = userRepository.getByEmailOrThrow(email);
+        Group group = groupRepository.getOrThrow(groupId);
 
         if (!group.getMembers().contains(author)) {
             log.warn("User {} is not a member of group {}. Access denied.", email, groupId);
-            throw new RuntimeException("그룹에 속한 사용자만 작성할 수 있습니다.");
+            throw new AccessDeniedException("그룹에 속한 사용자만 작성할 수 있습니다.");
         }
 
         String imagePath = null;
@@ -52,7 +52,10 @@ public class DiaryService {
 
         Diary diary = Diary.builder()
                 .title(dto.getTitle())
-                .content(dto.getContent())
+                .encryptedContent(dto.getEncryptedContent())
+                .iv(dto.getIv())
+                .authTag(dto.getAuthTag())
+                .encryptedAesKey(dto.getEncryptedAesKey())
                 .createdAt(LocalDateTime.now())
                 .author(author)
                 .group(group)
@@ -68,16 +71,13 @@ public class DiaryService {
 
     public DiaryDetailResponseDto getDiaryDetail(Long diaryId, String email) {
         log.info("Fetching diary detail for diaryId: {}, user: {}", diaryId, email);
-        Diary diary = diaryRepository.findById(diaryId)
-                .orElseThrow(() -> new RuntimeException("Diary not found"));
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        Diary diary = diaryRepository.getOrThrow(diaryId);
+        User user = userRepository.getByEmailOrThrow(email);
 
         // 권한 체크: 그룹 멤버만 조회 가능
         if (!diary.getGroup().getMembers().contains(user)) {
             log.warn("User {} is not a member of group {}. Access denied for diary {}.", email, diary.getGroup().getId(), diaryId);
-            throw new RuntimeException("해당 그룹에 속한 사용자만 조회할 수 있습니다.");
+            throw new AccessDeniedException("해당 그룹에 속한 사용자만 조회할 수 있습니다.");
         }
 
         log.info("Successfully fetched diary detail for diaryId: {}", diaryId);

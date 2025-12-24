@@ -2,7 +2,7 @@ package com.diary.shared_diary.repository;
 
 import com.diary.shared_diary.domain.Group;
 import com.diary.shared_diary.domain.User;
-import io.micrometer.common.lang.NonNull;
+import com.diary.shared_diary.exception.NotFoundException;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
@@ -13,13 +13,13 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
 
     Optional<Group> findByCode(String code);
 
-    default @NonNull Group getById(@NonNull Long id) {
+    default Group getOrThrow(Long id) {
         return findById(id)
-                .orElseThrow(() -> new RuntimeException("Group not found"));
+                .orElseThrow(() -> new NotFoundException("해당 ID의 그룹을 찾을 수 없습니다: " + id));
     }
 
-    default Group getByCode(String code) {
+    default Group getByCodeOrThrow(String code) {
         return findByCode(code)
-                .orElseThrow(() -> new RuntimeException("Group not found"));
+                .orElseThrow(() -> new NotFoundException("해당 코드의 그룹을 찾을 수 없습니다: " + code));
     }
 }

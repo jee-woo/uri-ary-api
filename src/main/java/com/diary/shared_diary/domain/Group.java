@@ -3,6 +3,7 @@ package com.diary.shared_diary.domain;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -39,5 +40,11 @@ public class Group {
     public void addMember(User user) {
         this.members.add(user);
         user.getGroups().add(this);
+    }
+
+    public void validateMember(User user) {
+        if (!this.members.contains(user)) {
+            throw new AccessDeniedException("그룹 멤버가 아닙니다.");
+        }
     }
 }
