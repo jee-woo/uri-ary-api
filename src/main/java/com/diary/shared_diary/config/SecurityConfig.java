@@ -33,7 +33,9 @@ public class SecurityConfig {
                         .disable()
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login/**", "/oauth2/**", "/login/oauth2/**", "/h2-console/**", "/dev/**", "/api/auth/refresh", "/api/auth/token").permitAll()
+                        .requestMatchers("/login/**", "/oauth2/**", "/login/oauth2/**", "/h2-console/**", "/dev/**", "/api/auth/refresh", "/api/auth/token", "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/groups/**", "/api/diaries/**", "/api/users/me", "/api/users/public-key").authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
