@@ -11,6 +11,7 @@ import com.diary.shared_diary.repository.DiaryRepository;
 import com.diary.shared_diary.repository.GroupRepository;
 import com.diary.shared_diary.repository.UserRepository;
 import com.diary.shared_diary.util.S3Uploader;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -20,29 +21,21 @@ import java.time.LocalDateTime;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class DiaryService {
 
     private final DiaryRepository diaryRepository;
     private final GroupRepository groupRepository;
     private final UserRepository userRepository;
     private final S3Uploader s3Uploader;
-
-    public DiaryService(DiaryRepository diaryRepository, GroupRepository groupRepository, UserRepository userRepository, S3Uploader s3Uploader) {
-        this.diaryRepository = diaryRepository;
-        this.groupRepository = groupRepository;
-        this.userRepository = userRepository;
-        this.s3Uploader = s3Uploader;
-    }
+    private final GroupMemberService groupMemberService;
 
     public DiaryResponseDto createDiary(Long groupId, String email, DiaryRequestDto dto, MultipartFile image) {
         log.info("Start creating diary for user: {}, group: {}", email, groupId);
         User author = userRepository.getByEmailOrThrow(email);
         Group group = groupRepository.getOrThrow(groupId);
 
-        if (!group.getMembers().contains(author)) {
-            log.warn("User {} is not a member of group {}. Access denied.", email, groupId);
-            throw new AccessDeniedException("그룹에 속한 사용자만 작성할 수 있습니다.");
-        }
+        groupMemberService.validateAcceptedMember(author, group);
 
         String imagePath = null;
         if (image != null && !image.isEmpty()) {
@@ -74,11 +67,7 @@ public class DiaryService {
         Diary diary = diaryRepository.getOrThrow(diaryId);
         User user = userRepository.getByEmailOrThrow(email);
 
-        // 권한 체크: 그룹 멤버만 조회 가능
-        if (!diary.getGroup().getMembers().contains(user)) {
-            log.warn("User {} is not a member of group {}. Access denied for diary {}.", email, diary.getGroup().getId(), diaryId);
-            throw new AccessDeniedException("해당 그룹에 속한 사용자만 조회할 수 있습니다.");
-        }
+        groupMemberService.validateAcceptedMember(user, diary.getGroup());
 
         log.info("Successfully fetched diary detail for diaryId: {}", diaryId);
         return new DiaryDetailResponseDto(diary, s3Uploader);

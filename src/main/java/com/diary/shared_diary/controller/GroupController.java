@@ -7,6 +7,7 @@ import com.diary.shared_diary.service.GroupService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,6 +35,17 @@ public class GroupController {
     public void joinGroup(@RequestBody @Valid JoinGroupRequestDto dto, @AuthenticationPrincipal CustomUserDetails userDetails) {
         log.info("[GROUP-JOIN] Request user: {}, group code: {}", userDetails.getUsername(), dto.code());
         groupService.joinGroupByCode(dto.code(), userDetails.getUsername());
+    }
+
+    @GetMapping("/{groupId}/pending-members")
+    public ResponseEntity<List<PendingMemberResponseDto>> getPendingMembers(
+            @PathVariable Long groupId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) { // 현재 로그인 유저 정보
+
+        List<PendingMemberResponseDto> pendingMembers =
+                groupService.getPendingMembers(groupId, userDetails.getUsername());
+
+        return ResponseEntity.ok(pendingMembers);
     }
 
 
