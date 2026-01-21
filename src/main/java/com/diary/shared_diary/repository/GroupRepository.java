@@ -11,8 +11,7 @@ import java.util.Optional;
 import java.util.List;
 
 public interface GroupRepository extends JpaRepository<Group, Long> {
-    @Query("SELECT g FROM Group g JOIN g.groupMembers gm WHERE gm.user = :user AND gm.status = 'ACCEPTED'")
-    List<Group> findAllByAcceptedMember(@Param("user") User user);
+
 
     Optional<Group> findByCode(String code);
 

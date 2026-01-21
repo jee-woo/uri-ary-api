@@ -1,9 +1,6 @@
 package com.diary.shared_diary.service;
 
-import com.diary.shared_diary.domain.Diary;
-import com.diary.shared_diary.domain.Group;
-import com.diary.shared_diary.domain.MemberStatus;
-import com.diary.shared_diary.domain.User;
+import com.diary.shared_diary.domain.*;
 import com.diary.shared_diary.dto.group.GroupDetailResponseDto;
 import com.diary.shared_diary.dto.group.GroupRequestDto;
 import com.diary.shared_diary.dto.group.GroupResponseDto;
@@ -38,10 +35,13 @@ public class GroupService {
     public List<GroupResponseDto> getGroupsByUserEmail(String email) {
         log.info("Fetching groups for user: {}", email);
         User user = userRepository.getByEmailOrThrow(email);
-        List<Group> groups = groupRepository.findAllByAcceptedMember(user);
-        log.info("Found {} groups for user: {}", groups.size(), email);
-        return groups.stream()
-                .map(group -> new GroupResponseDto(group.getId(), group.getName(), group.getCode()))
+        List<GroupMember> groupMembers = groupMemberRepository.findByUser(user);
+        log.info("Found {} groups for user: {}", groupMembers.size(), email);
+        return groupMembers.stream()
+                .map(groupMember -> {
+                    Group group = groupMember.getGroup();
+                    return new GroupResponseDto(group.getId(), group.getName(), group.getCode(), groupMember.getStatus());
+                })
                 .toList();
     }
 
@@ -78,7 +78,7 @@ public class GroupService {
 
         Group saved = groupRepository.save(group);
         log.info("Group created with id: {}", saved.getId());
-        return new GroupResponseDto(saved.getId(), saved.getName(), code);
+        return new GroupResponseDto(saved.getId(), saved.getName(), code, MemberStatus.ACCEPTED);
     }
 
     @Transactional
