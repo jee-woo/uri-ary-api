@@ -2,6 +2,7 @@ package com.diary.shared_diary.config;
 
 import com.diary.shared_diary.auth.CustomUserDetails;
 import com.diary.shared_diary.auth.JwtUtil;
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,9 +33,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
             try {
-                String email = jwtUtil.validateAndGetEmail(token); // 유효성 검사 및 이메일 추출
-                if (email != null) {
-                    CustomUserDetails userDetails = new CustomUserDetails(email);
+                Claims claims = jwtUtil.getClaims(token);
+                String email = claims.getSubject();
+                Long userId = claims.get("userId", Long.class);
+
+                if (email != null && userId != null) {
+                    CustomUserDetails userDetails = new CustomUserDetails(userId, email);
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 

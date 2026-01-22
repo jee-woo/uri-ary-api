@@ -1,5 +1,6 @@
 package com.diary.shared_diary.auth;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
@@ -22,17 +23,18 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
     }
 
-    public String generateAccessToken(String email) {
-        return generateToken(email, ACCESS_TOKEN_EXPIRATION_MS);
+    public String generateAccessToken(Long userId, String email) {
+        return generateToken(userId, email, ACCESS_TOKEN_EXPIRATION_MS);
     }
 
-    public String generateRefreshToken(String email) {
-        return generateToken(email, REFRESH_TOKEN_EXPIRATION_MS);
+    public String generateRefreshToken(Long userId, String email) {
+        return generateToken(userId, email, REFRESH_TOKEN_EXPIRATION_MS);
     }
 
-    private String generateToken(String email, long expirationMs) {
+    private String generateToken(Long userId, String email, long expirationMs) {
         return Jwts.builder()
                 .setSubject(email)
+                .claim("userId", userId) // userId 클레임 추가
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
@@ -40,11 +42,14 @@ public class JwtUtil {
     }
 
     public String validateAndGetEmail(String token) {
+        return getClaims(token).getSubject();
+    }
+
+    public Claims getClaims(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
                 .build()
                 .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
+                .getBody();
     }
 }

@@ -79,8 +79,8 @@ public class AuthController {
         user.setAuthorizationCode(null);
         user.setAuthorizationCodeExpiresAt(null);
 
-        String accessToken = jwtUtil.generateAccessToken(user.getEmail());
-        String refreshToken = jwtUtil.generateRefreshToken(user.getEmail());
+        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail());
+        String refreshToken = jwtUtil.generateRefreshToken(user.getId(), user.getEmail());
         user.setRefreshToken(refreshToken);
         userRepository.save(user);
         log.info("[AUTH-TOKEN-EXCHANGE] Successfully exchanged code for tokens for user: {}", user.getEmail());
@@ -111,8 +111,8 @@ public class AuthController {
             // --- 리프레시 토큰 로테이션 (RTR) 적용 시작 ---
 
             // 3. 새로운 액세스 토큰과 리프레시 토큰 발급
-            String newAccessToken = jwtUtil.generateAccessToken(email);
-            String newRefreshToken = jwtUtil.generateRefreshToken(email);
+            String newAccessToken = jwtUtil.generateAccessToken(user.getId(), email);
+            String newRefreshToken = jwtUtil.generateRefreshToken(user.getId(), email);
 
             // 4. DB에 새로운 리프레시 토큰 저장 (기존 토큰 폐기 효과)
             user.setRefreshToken(newRefreshToken);
