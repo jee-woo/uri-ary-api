@@ -1,5 +1,6 @@
 package com.diary.shared_diary.controller;
 
+import com.diary.shared_diary.auth.CustomUserDetails;
 import com.diary.shared_diary.dto.notification.NotificationResponseDto;
 import com.diary.shared_diary.service.NotificationService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -17,8 +18,8 @@ public class NotificationController {
 
     @Operation(summary = "사용자 알림 목록 조회")
     @GetMapping
-    public List<NotificationResponseDto> getNotifications(@AuthenticationPrincipal Long userId) {
-        return notificationService.getNotifications(userId);
+    public List<NotificationResponseDto> getNotifications(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        return notificationService.getNotifications(userDetails.getId());
     }
 
     @Operation(summary = "알림 읽음 처리")

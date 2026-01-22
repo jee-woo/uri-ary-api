@@ -32,6 +32,10 @@ public class GroupService {
     private final GroupMemberRepository groupMemberRepository;
     private final ObjectProvider<GroupMemberService> groupMemberServiceProvider;
 
+    public Group getGroupByCode(String code) {
+        return groupRepository.getByCodeOrThrow(code);
+    }
+
     public List<GroupResponseDto> getGroupsByUserEmail(String email) {
         log.info("Fetching groups for user: {}", email);
         User user = userRepository.getByEmailOrThrow(email);
@@ -84,19 +88,19 @@ public class GroupService {
         return new GroupResponseDto(group.getId(), group.getName(), code, MemberStatus.ACCEPTED);
     }
 
-    @Transactional
-    public void joinGroupByCode(String code, String email) {
-        log.info("User {} attempts to join group with code: {}", email, code);
-        Group group = groupRepository.getByCodeOrThrow(code);
-        User user = userRepository.getByEmailOrThrow(email);
-
-        if (!groupMemberRepository.existsByUserAndGroup(user, group)) {
-            groupMemberRepository.save(GroupMember.createPendingMember(user, group));
-            log.info("User {} request to join group (PENDING) with code: {}", email, code);
-        } else {
-            log.info("User {} already has a membership record for group with code: {}", email, code);
-        }
-    }
+//    @Transactional
+//    public void joinGroupByCode(String code, String email) {
+//        log.info("User {} attempts to join group with code: {}", email, code);
+//        Group group = groupRepository.getByCodeOrThrow(code);
+//        User user = userRepository.getByEmailOrThrow(email);
+//
+//        if (!groupMemberRepository.existsByUserAndGroup(user, group)) {
+//            groupMemberRepository.save(GroupMember.createPendingMember(user, group));
+//            log.info("User {} request to join group (PENDING) with code: {}", email, code);
+//        } else {
+//            log.info("User {} already has a membership record for group with code: {}", email, code);
+//        }
+//    }
 
     @Transactional
     public void addMembers(Long groupId, List<Long> userIds) {

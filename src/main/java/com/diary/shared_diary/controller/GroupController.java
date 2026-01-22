@@ -23,9 +23,11 @@ public class GroupController {
     private final GroupMemberService groupMemberService;
 
     @Operation(summary = "그룹에 가입 요청")
-    @PostMapping("/{groupId}/join-requests")
-    public void requestToJoinGroup(@AuthenticationPrincipal Long userId, @PathVariable Long groupId) {
-        groupMemberService.requestToJoinGroup(userId, groupId);
+    @PostMapping("/join-requests")
+    public void requestToJoinGroup(@AuthenticationPrincipal CustomUserDetails userDetails, @RequestBody @Valid JoinGroupRequestDto dto) {
+        log.info("[GROUP-JOIN] Request user: {}, group code: {}", userDetails.getId(), dto.code());
+        Long groupId = groupService.getGroupByCode(dto.code()).getId();
+        groupMemberService.requestToJoinGroup(userDetails.getId(), groupId);
     }
 
     @Operation(summary = "그룹 가입 요청 승인")
@@ -36,8 +38,8 @@ public class GroupController {
 
     @Operation(summary = "그룹 가입 대기자 목록 조회")
     @GetMapping("/{groupId}/pending-members")
-    public List<PendingMemberResponseDto> getPendingMembers(@AuthenticationPrincipal Long userId, @PathVariable Long groupId) {
-        return groupMemberService.getPendingMembers(userId, groupId);
+    public List<PendingMemberResponseDto> getPendingMembers(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable Long groupId) {
+        return groupMemberService.getPendingMembers(userDetails.getId(), groupId);
     }
 
     @GetMapping("/user")
@@ -45,13 +47,6 @@ public class GroupController {
         String email = userDetails.getUsername(); // 또는 userDetails.getEmail();
         log.info("[GROUP-GET-USER] Request user: {}", email);
         return groupService.getGroupsByUserEmail(email);
-    }
-
-
-    @PostMapping("/join")
-    public void joinGroup(@RequestBody @Valid JoinGroupRequestDto dto, @AuthenticationPrincipal CustomUserDetails userDetails) {
-        log.info("[GROUP-JOIN] Request user: {}, group code: {}", userDetails.getUsername(), dto.code());
-        groupService.joinGroupByCode(dto.code(), userDetails.getUsername());
     }
 
     @GetMapping("/{groupId}")
