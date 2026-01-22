@@ -12,7 +12,6 @@ import com.diary.shared_diary.repository.DiaryRepository;
 import com.diary.shared_diary.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;

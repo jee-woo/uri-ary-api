@@ -26,4 +26,21 @@ public class GroupMember {
     private MemberStatus status; // PENDING 또는 ACCEPTED
 
     private LocalDateTime joinedAt;
+
+    public void approve() {
+        if (this.status != MemberStatus.PENDING) {
+            throw new IllegalStateException("대기 중인 요청만 승인할 수 있습니다.");
+        }
+        this.status = MemberStatus.ACCEPTED;
+        this.joinedAt = LocalDateTime.now(); // 승인된 시점을 기록
+    }
+
+    public static GroupMember createPendingMember(User user, Group group) {
+        return GroupMember.builder()
+                .user(user)
+                .group(group)
+                .status(MemberStatus.PENDING)
+                .joinedAt(LocalDateTime.now())
+                .build();
+    }
 }

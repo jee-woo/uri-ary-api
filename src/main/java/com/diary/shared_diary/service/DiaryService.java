@@ -6,14 +6,12 @@ import com.diary.shared_diary.domain.User;
 import com.diary.shared_diary.dto.diary.DiaryDetailResponseDto;
 import com.diary.shared_diary.dto.diary.DiaryRequestDto;
 import com.diary.shared_diary.dto.diary.DiaryResponseDto;
-import com.diary.shared_diary.exception.NotFoundException;
 import com.diary.shared_diary.repository.DiaryRepository;
 import com.diary.shared_diary.repository.GroupRepository;
 import com.diary.shared_diary.repository.UserRepository;
 import com.diary.shared_diary.util.S3Uploader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 

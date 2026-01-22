@@ -4,8 +4,6 @@ import com.diary.shared_diary.domain.*;
 import com.diary.shared_diary.dto.group.GroupDetailResponseDto;
 import com.diary.shared_diary.dto.group.GroupRequestDto;
 import com.diary.shared_diary.dto.group.GroupResponseDto;
-import com.diary.shared_diary.dto.group.PendingMemberResponseDto;
-import com.diary.shared_diary.exception.NotFoundException;
 import com.diary.shared_diary.repository.DiaryRepository;
 import com.diary.shared_diary.repository.GroupMemberRepository;
 import com.diary.shared_diary.repository.GroupRepository;
@@ -14,6 +12,7 @@ import com.diary.shared_diary.util.CodeGenerator;
 import com.diary.shared_diary.util.S3Uploader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +22,7 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class GroupService {
 
     private final GroupRepository groupRepository;
@@ -30,7 +30,7 @@ public class GroupService {
     private final DiaryRepository diaryRepository;
     private final S3Uploader s3Uploader;
     private final GroupMemberRepository groupMemberRepository;
-    private final GroupMemberService groupMemberService;
+    private final ObjectProvider<GroupMemberService> groupMemberServiceProvider;
 
     public List<GroupResponseDto> getGroupsByUserEmail(String email) {
         log.info("Fetching groups for user: {}", email);
@@ -68,17 +68,20 @@ public class GroupService {
             code = CodeGenerator.generateGroupCode();
         } while (groupRepository.findByCode(code).isPresent());
 
-        Group group = Group.builder()
+        Group group = groupRepository.save(Group.builder()
                 .name(dto.name())
                 .code(code)
                 .createdAt(LocalDateTime.now())
-                .build();
+                .build());
 
-        group.addMember(creator, MemberStatus.ACCEPTED);
-
-        Group saved = groupRepository.save(group);
-        log.info("Group created with id: {}", saved.getId());
-        return new GroupResponseDto(saved.getId(), saved.getName(), code, MemberStatus.ACCEPTED);
+        groupMemberRepository.save(GroupMember.builder()
+                .user(creator)
+                .group(group)
+                .status(MemberStatus.ACCEPTED)
+                .joinedAt(LocalDateTime.now())
+                .build());
+        log.info("Group created with id: {}", group.getId());
+        return new GroupResponseDto(group.getId(), group.getName(), code, MemberStatus.ACCEPTED);
     }
 
     @Transactional
@@ -87,11 +90,8 @@ public class GroupService {
         Group group = groupRepository.getByCodeOrThrow(code);
         User user = userRepository.getByEmailOrThrow(email);
 
-        boolean alreadyExists = groupMemberRepository.existsByUserAndGroup(user, group);
-
-        if (!alreadyExists) {
-            group.addMember(user, MemberStatus.PENDING);
-            groupRepository.save(group);
+        if (!groupMemberRepository.existsByUserAndGroup(user, group)) {
+            groupMemberRepository.save(GroupMember.createPendingMember(user, group));
             log.info("User {} request to join group (PENDING) with code: {}", email, code);
         } else {
             log.info("User {} already has a membership record for group with code: {}", email, code);
@@ -107,22 +107,6 @@ public class GroupService {
         for (User user : usersToAdd) {
             group.addMember(user, MemberStatus.PENDING);
         }
-
         log.info("Successfully requested adding {} members to group: {}", usersToAdd.size(), groupId);
-    }
-
-
-    @Transactional(readOnly = true)
-    public List<PendingMemberResponseDto> getPendingMembers(Long groupId, String email) {
-        Group group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new NotFoundException("그룹을 찾을 수 없습니다."));
-        User user = userRepository.getByEmailOrThrow(email);
-
-        // 요청한 사람이 이 그룹의 승인된 멤버인지 확인 (보안)
-        groupMemberService.validateAcceptedMember(user, group);
-
-        return groupMemberRepository.findByGroupIdAndStatus(groupId, MemberStatus.PENDING).stream()
-                .map(PendingMemberResponseDto::new)
-                .toList();
     }
 }
