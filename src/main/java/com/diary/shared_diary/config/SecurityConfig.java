@@ -36,7 +36,7 @@ public class SecurityConfig {
                         .requestMatchers("/login/**", "/oauth2/**", "/login/oauth2/**", "/h2-console/**", "/dev/**", "/api/auth/refresh", "/api/auth/token", "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html").permitAll()
-                        .requestMatchers("/api/groups/**", "/api/diaries/**", "/api/users/me", "/api/users/public-key").authenticated()
+                        .requestMatchers("/api/groups/**", "/api/diaries/**", "/api/users/me", "/api/users/public-key", "/api/notifications/**").authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
                         .defaultSuccessUrl("/login/success", true)
