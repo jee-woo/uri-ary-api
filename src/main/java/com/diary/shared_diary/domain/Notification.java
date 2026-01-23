@@ -34,14 +34,6 @@ public class Notification {
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
-    public Notification(User receiver, String message, NotificationType type, Long targetId) {
-        this.receiver = receiver;
-        this.message = message;
-        this.type = type;
-        this.targetId = targetId;
-        this.isRead = false;
-    }
-
     public void read() {
         this.isRead = true;
     }

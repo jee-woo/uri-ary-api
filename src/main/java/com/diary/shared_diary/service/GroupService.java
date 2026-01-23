@@ -12,7 +12,6 @@ import com.diary.shared_diary.util.CodeGenerator;
 import com.diary.shared_diary.util.S3Uploader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +29,6 @@ public class GroupService {
     private final DiaryRepository diaryRepository;
     private final S3Uploader s3Uploader;
     private final GroupMemberRepository groupMemberRepository;
-    private final ObjectProvider<GroupMemberService> groupMemberServiceProvider;
 
     public Group getGroupByCode(String code) {
         return groupRepository.getByCodeOrThrow(code);
@@ -87,20 +85,6 @@ public class GroupService {
         log.info("Group created with id: {}", group.getId());
         return new GroupResponseDto(group.getId(), group.getName(), code, MemberStatus.ACCEPTED);
     }
-
-//    @Transactional
-//    public void joinGroupByCode(String code, String email) {
-//        log.info("User {} attempts to join group with code: {}", email, code);
-//        Group group = groupRepository.getByCodeOrThrow(code);
-//        User user = userRepository.getByEmailOrThrow(email);
-//
-//        if (!groupMemberRepository.existsByUserAndGroup(user, group)) {
-//            groupMemberRepository.save(GroupMember.createPendingMember(user, group));
-//            log.info("User {} request to join group (PENDING) with code: {}", email, code);
-//        } else {
-//            log.info("User {} already has a membership record for group with code: {}", email, code);
-//        }
-//    }
 
     @Transactional
     public void addMembers(Long groupId, List<Long> userIds) {
