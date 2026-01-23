@@ -4,12 +4,14 @@ import com.diary.shared_diary.domain.Group;
 import com.diary.shared_diary.domain.User;
 import com.diary.shared_diary.exception.NotFoundException;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 import java.util.List;
 
 public interface GroupRepository extends JpaRepository<Group, Long> {
-    List<Group> findAllByMembersContains(User user);
+
 
     Optional<Group> findByCode(String code);
 

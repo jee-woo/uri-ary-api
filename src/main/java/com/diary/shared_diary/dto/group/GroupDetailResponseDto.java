@@ -2,6 +2,7 @@ package com.diary.shared_diary.dto.group;
 
 import com.diary.shared_diary.domain.Diary;
 import com.diary.shared_diary.domain.Group;
+import com.diary.shared_diary.domain.MemberStatus;
 import com.diary.shared_diary.dto.diary.DiaryResponseDto;
 import com.diary.shared_diary.dto.user.UserResponseDto;
 import com.diary.shared_diary.util.S3Uploader;
@@ -21,8 +22,9 @@ public class GroupDetailResponseDto {
         this.id = group.getId();
         this.name = group.getName();
         this.code = group.getCode();
-        this.members = group.getMembers().stream()
-                .map(UserResponseDto::new)
+        this.members = group.getGroupMembers().stream()
+                .filter(gm -> gm.getStatus() == MemberStatus.ACCEPTED)
+                .map(gm -> new UserResponseDto(gm.getUser()))
                 .toList();
         this.diaries = diaryList.stream()
                 .map(diary -> new DiaryResponseDto(diary, uploader))

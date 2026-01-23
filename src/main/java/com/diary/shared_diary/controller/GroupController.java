@@ -2,14 +2,15 @@ package com.diary.shared_diary.controller;
 
 import com.diary.shared_diary.auth.CustomUserDetails;
 import com.diary.shared_diary.dto.group.*;
-import com.diary.shared_diary.repository.GroupRepository;
+import com.diary.shared_diary.service.GroupMemberService;
 import com.diary.shared_diary.service.GroupService;
-import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.List;
 
 @Slf4j
@@ -19,8 +20,27 @@ import java.util.List;
 public class GroupController {
 
     private final GroupService groupService;
-    private final GroupRepository groupRepository;
+    private final GroupMemberService groupMemberService;
 
+    @Operation(summary = "그룹에 가입 요청")
+    @PostMapping("/join-requests")
+    public void requestToJoinGroup(@AuthenticationPrincipal CustomUserDetails userDetails, @RequestBody @Valid JoinGroupRequestDto dto) {
+        log.info("[GROUP-JOIN] Request user: {}, group code: {}", userDetails.getId(), dto.code());
+        Long groupId = groupService.getGroupByCode(dto.code()).getId();
+        groupMemberService.requestToJoinGroup(userDetails.getId(), groupId);
+    }
+
+    @Operation(summary = "그룹 가입 요청 승인")
+    @PostMapping("/join-requests/{targetId}/approve")
+    public void approveJoinRequest(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable Long targetId) {
+        groupMemberService.approveJoinRequest(userDetails.getId(), targetId);
+    }
+
+    @Operation(summary = "그룹 가입 대기자 목록 조회")
+    @GetMapping("/{groupId}/pending-members")
+    public List<PendingMemberResponseDto> getPendingMembers(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable Long groupId) {
+        return groupMemberService.getPendingMembers(userDetails.getId(), groupId);
+    }
 
     @GetMapping("/user")
     public List<GroupResponseDto> getUserGroups(@AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -28,14 +48,6 @@ public class GroupController {
         log.info("[GROUP-GET-USER] Request user: {}", email);
         return groupService.getGroupsByUserEmail(email);
     }
-
-
-    @PostMapping("/join")
-    public void joinGroup(@RequestBody @Valid JoinGroupRequestDto dto, @AuthenticationPrincipal CustomUserDetails userDetails) {
-        log.info("[GROUP-JOIN] Request user: {}, group code: {}", userDetails.getUsername(), dto.code());
-        groupService.joinGroupByCode(dto.code(), userDetails.getUsername());
-    }
-
 
     @GetMapping("/{groupId}")
     public GroupDetailResponseDto getGroupDetail(@PathVariable Long groupId, @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -53,14 +65,5 @@ public class GroupController {
         String email = userDetails.getUsername();
         log.info("[GROUP-CREATE] Request user: {}", email);
         return groupService.createGroup(email, dto);
-    }
-
-    @PostMapping("/{groupId}/members")
-    public void addGroupMembers(
-            @PathVariable Long groupId,
-            @RequestBody GroupMemberAddRequestDto dto
-    ) {
-        log.info("[GROUP-ADD-MEMBER] Add members to group: {}", groupId);
-        groupService.addMembers(groupId, dto.userIds());
     }
 }

@@ -5,9 +5,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 @Entity
 @Table(name = "users")
@@ -41,8 +40,8 @@ public class User {
     @JsonIgnore
     private List<Comment> comments;
 
-    @ManyToMany(mappedBy = "members")
-    @JsonBackReference
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @JsonIgnore
     @Builder.Default
-    private Set<Group> groups = new HashSet<>();
+    private List<GroupMember> groupMembers = new ArrayList<>();
 }
