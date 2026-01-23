@@ -72,11 +72,7 @@ public class GroupMemberService {
         User targetUser = request.getUser();
         validateAcceptedMember(admin, group);
 
-//        User targetUser = userRepository.getByIdOrThrow(memberId);
-        GroupMember groupMember = groupMemberRepository.findByUserAndGroup(targetUser, group)
-                .orElseThrow(() -> new NotFoundException("가입 요청이 존재하지 않습니다."));
-
-        groupMember.approve();
+        request.approve();
 
         String message = "'" + group.getName() + "' 그룹 가입 요청이 승인되었습니다.";
         Notification notification = Notification.builder()
@@ -89,7 +85,6 @@ public class GroupMemberService {
                 .build();
         Notification savedNotification = notificationRepository.save(notification);
         log.info("Saved notification: {}", savedNotification);
-//        notificationRepository.save(new Notification(targetUser, message, NotificationType.SYSTEM, group.getId()));
     }
 
     public List<PendingMemberResponseDto> getPendingMembers(Long userId, Long groupId) {
