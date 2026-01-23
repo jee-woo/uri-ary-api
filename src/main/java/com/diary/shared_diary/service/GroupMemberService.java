@@ -39,8 +39,10 @@ public class GroupMemberService {
             log.warn("User {} is already a member of group {}", userId, groupId);
             throw new IllegalStateException("이미 가입 요청을 보냈거나, 가입된 그룹입니다.");
         }
-
-        groupMemberRepository.save(GroupMember.createPendingMember(user, group));
+        GroupMember pendingRequest = groupMemberRepository.save(
+                GroupMember.createPendingMember(user, group)
+        );
+//        groupMemberRepository.save(GroupMember.createPendingMember(user, group));
 
         List<GroupMember> members = groupMemberRepository.findByGroupAndStatus(group, MemberStatus.ACCEPTED);
         log.info("Found {} accepted members in group {}", members.size(), groupId);
@@ -51,7 +53,7 @@ public class GroupMemberService {
                     .receiver(member.getUser())
                     .message(message)
                     .type(NotificationType.REQUEST)
-                    .targetId(group.getId())
+                    .targetId(pendingRequest.getId())
                     .isRead(false)
                     .createdAt(LocalDateTime.now())
                     .build();
@@ -62,20 +64,32 @@ public class GroupMemberService {
     }
 
     @Transactional
-    public void approveJoinRequest(Long adminId, Long groupId, Long memberId) {
+    public void approveJoinRequest(Long adminId, Long groupMemberId) {
+        GroupMember request = groupMemberRepository.findById(groupMemberId)
+                .orElseThrow(() -> new NotFoundException("가입 요청을 찾을 수 없습니다."));
         User admin = userRepository.getByIdOrThrow(adminId);
-        Group group = groupRepository.getOrThrow(groupId);
-
+        Group group = request.getGroup();
+        User targetUser = request.getUser();
         validateAcceptedMember(admin, group);
 
-        User targetUser = userRepository.getByIdOrThrow(memberId);
+//        User targetUser = userRepository.getByIdOrThrow(memberId);
         GroupMember groupMember = groupMemberRepository.findByUserAndGroup(targetUser, group)
                 .orElseThrow(() -> new NotFoundException("가입 요청이 존재하지 않습니다."));
 
         groupMember.approve();
 
         String message = "'" + group.getName() + "' 그룹 가입 요청이 승인되었습니다.";
-        notificationRepository.save(new Notification(targetUser, message, NotificationType.SYSTEM, group.getId()));
+        Notification notification = Notification.builder()
+                .receiver(targetUser)
+                .message(message)
+                .type(NotificationType.APPROVED)
+                .targetId(group.getId())
+                .isRead(false)
+                .createdAt(LocalDateTime.now())
+                .build();
+        Notification savedNotification = notificationRepository.save(notification);
+        log.info("Saved notification: {}", savedNotification);
+//        notificationRepository.save(new Notification(targetUser, message, NotificationType.SYSTEM, group.getId()));
     }
 
     public List<PendingMemberResponseDto> getPendingMembers(Long userId, Long groupId) {

@@ -31,9 +31,9 @@ public class GroupController {
     }
 
     @Operation(summary = "그룹 가입 요청 승인")
-    @PostMapping("/{groupId}/join-requests/{memberId}/approve")
-    public void approveJoinRequest(@AuthenticationPrincipal Long userId, @PathVariable Long groupId, @PathVariable Long memberId) {
-        groupMemberService.approveJoinRequest(userId, groupId, memberId);
+    @PostMapping("/join-requests/{targetId}/approve")
+    public void approveJoinRequest(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable Long targetId) {
+        groupMemberService.approveJoinRequest(userDetails.getId(), targetId);
     }
 
     @Operation(summary = "그룹 가입 대기자 목록 조회")
@@ -66,13 +66,4 @@ public class GroupController {
         log.info("[GROUP-CREATE] Request user: {}", email);
         return groupService.createGroup(email, dto);
     }
-
-//    @PostMapping("/{groupId}/members")
-//    public void addGroupMembers(
-//            @PathVariable Long groupId,
-//            @RequestBody GroupMemberAddRequestDto dto
-//    ) {
-//        log.info("[GROUP-ADD-MEMBER] Add members to group: {}", groupId);
-//        groupService.addMembers(groupId, dto.userIds());
-//    }
 }
