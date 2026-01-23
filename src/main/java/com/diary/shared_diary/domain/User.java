@@ -44,6 +44,4 @@ public class User {
     @JsonIgnore
     @Builder.Default
     private List<GroupMember> groupMembers = new ArrayList<>();
-
-
 }

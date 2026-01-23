@@ -14,7 +14,6 @@ import java.util.Set;
 @Entity
 @Table(name = "user_group")
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -34,9 +33,7 @@ public class Group {
     @OneToMany(mappedBy = "group", cascade = CascadeType.ALL)
     @Builder.Default
     private List<GroupMember> groupMembers = new ArrayList<>();
-//
 
-    // 편의 메서드: 이제 GroupMember 객체를 통해 관계를 맺습니다.
     public void addMember(User user, MemberStatus status) {
         GroupMember groupMember = GroupMember.builder()
                 .user(user)
