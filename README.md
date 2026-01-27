@@ -59,7 +59,8 @@
 
 ### 🧩 ERD
 
-![ERD](https://github.com/user-attachments/assets/e2959342-736c-45f7-af5c-654b7fc3a4f8)
+<!-- ![ERD](https://github.com/user-attachments/assets/e2959342-736c-45f7-af5c-654b7fc3a4f8) -->
+<img width="1256" height="771" alt="image" src="https://github.com/user-attachments/assets/86905ffc-3251-4fa8-969d-c54b4b538c8f" />
 
 
 ---
