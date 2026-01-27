@@ -1,13 +1,13 @@
 package com.diary.shared_diary.dto.diary;
 
 import com.diary.shared_diary.domain.Diary;
+import com.diary.shared_diary.domain.DiaryKey;
+import com.diary.shared_diary.dto.comment.CommentResponseDto;
 import com.diary.shared_diary.util.S3Uploader;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
-
-import com.diary.shared_diary.dto.comment.CommentResponseDto;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -16,18 +16,26 @@ public class DiaryDetailResponseDto {
     private Long id;
     private String title;
     private String encryptedContent;
+    private String iv; // for content
+    private String authTag; // for content
     private String authorUsername;
-    private LocalDateTime createdAt;
     private String imageUrl;
     private List<CommentResponseDto> comments;
-    private String iv;
-    private String authTag;
-    private String encryptedAesKey;
+    private LocalDateTime createdAt;
+    private EncryptedKeyInfo keyInfo; // for key
 
-    public DiaryDetailResponseDto(Diary diary, S3Uploader uploader) {
+    @Getter
+    @AllArgsConstructor
+    public static class EncryptedKeyInfo {
+        private String encryptedAesKey;
+    }
+
+    public DiaryDetailResponseDto(Diary diary, DiaryKey diaryKey, S3Uploader uploader) {
         this.id = diary.getId();
         this.title = diary.getTitle();
         this.encryptedContent = diary.getEncryptedContent();
+        this.iv = diary.getIv(); // from Diary
+        this.authTag = diary.getAuthTag(); // from Diary
         this.authorUsername = diary.getAuthor().getUsername();
         this.createdAt = diary.getCreatedAt();
         this.imageUrl = diary.getImagePath() != null
@@ -37,8 +45,8 @@ public class DiaryDetailResponseDto {
                 .map(CommentResponseDto::new)
                 .collect(Collectors.toList());
 
-        this.iv = diary.getIv();
-        this.authTag = diary.getAuthTag();
-        this.encryptedAesKey = diary.getEncryptedAesKey();
+        this.keyInfo = new EncryptedKeyInfo(
+                diaryKey.getEncryptedAesKey()
+        );
     }
 }

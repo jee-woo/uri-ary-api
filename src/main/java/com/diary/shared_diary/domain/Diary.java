@@ -20,6 +20,12 @@ public class Diary {
     @Column(columnDefinition = "TEXT")
     private String encryptedContent;
 
+    @Column(columnDefinition = "TEXT", nullable = false)
+    private String iv;
+
+    @Column(columnDefinition = "TEXT", nullable = false)
+    private String authTag;
+
     private LocalDateTime createdAt;
 
     @Column
@@ -36,9 +42,5 @@ public class Diary {
     @OneToMany(mappedBy = "diary", cascade = CascadeType.ALL)
     private List<Comment> comments;
 
-    private String iv;
-    private String authTag;
 
-    @Column(columnDefinition = "TEXT")
-    private String encryptedAesKey;
 }

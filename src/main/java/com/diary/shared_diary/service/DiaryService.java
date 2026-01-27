@@ -1,11 +1,12 @@
 package com.diary.shared_diary.service;
 
-import com.diary.shared_diary.domain.Diary;
-import com.diary.shared_diary.domain.Group;
-import com.diary.shared_diary.domain.User;
+import com.diary.shared_diary.domain.*;
 import com.diary.shared_diary.dto.diary.DiaryDetailResponseDto;
 import com.diary.shared_diary.dto.diary.DiaryRequestDto;
 import com.diary.shared_diary.dto.diary.DiaryResponseDto;
+import com.diary.shared_diary.dto.diary.EncryptedDiaryKeyDto;
+import com.diary.shared_diary.exception.NotFoundException;
+import com.diary.shared_diary.repository.DiaryKeyRepository;
 import com.diary.shared_diary.repository.DiaryRepository;
 import com.diary.shared_diary.repository.GroupRepository;
 import com.diary.shared_diary.repository.UserRepository;
@@ -13,9 +14,14 @@ import com.diary.shared_diary.util.S3Uploader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -25,9 +31,11 @@ public class DiaryService {
     private final DiaryRepository diaryRepository;
     private final GroupRepository groupRepository;
     private final UserRepository userRepository;
+    private final DiaryKeyRepository diaryKeyRepository;
     private final S3Uploader s3Uploader;
     private final GroupMemberService groupMemberService;
 
+    @Transactional
     public DiaryResponseDto createDiary(Long groupId, String email, DiaryRequestDto dto, MultipartFile image) {
         log.info("Start creating diary for user: {}, group: {}", email, groupId);
         User author = userRepository.getByEmailOrThrow(email);
@@ -46,19 +54,56 @@ public class DiaryService {
                 .encryptedContent(dto.getEncryptedContent())
                 .iv(dto.getIv())
                 .authTag(dto.getAuthTag())
-                .encryptedAesKey(dto.getEncryptedAesKey())
                 .createdAt(LocalDateTime.now())
                 .author(author)
                 .group(group)
                 .imagePath(imagePath)
                 .build();
 
-        Diary saved = diaryRepository.save(diary);
-        log.info("Diary created with id: {}", saved.getId());
-        return new DiaryResponseDto(saved, s3Uploader);
+        Diary savedDiary = diaryRepository.save(diary);
+        log.info("Diary created with id: {}", savedDiary.getId());
+
+        // [DEBUG] Log received keys from client
+        if (dto.getKeys() == null) {
+            log.warn("[DEBUG] Keys list from client is null.");
+        } else {
+            log.info("[DEBUG] Received {} keys from client.", dto.getKeys().size());
+            dto.getKeys().forEach(k -> 
+                log.info("[DEBUG] Client Key DTO: userId={}, key is present={}", k.getUserId(), k.getEncryptedAesKey() != null)
+            );
+        }
+
+        List<GroupMember> acceptedMembers = group.getGroupMembers().stream()
+                .filter(gm -> gm.getStatus() == MemberStatus.ACCEPTED)
+                .toList();
+
+        Map<Long, User> memberMap = acceptedMembers.stream()
+                .map(GroupMember::getUser)
+                .collect(Collectors.toMap(User::getId, Function.identity()));
+
+        // [DEBUG] Log server-side member list
+        log.info("[DEBUG] Found {} accepted members in the group.", memberMap.size());
+        memberMap.keySet().forEach(id -> log.info("[DEBUG] Accepted member ID on server: {}", id));
+
+        if (dto.getKeys() != null) {
+            for (EncryptedDiaryKeyDto keyDto : dto.getKeys()) {
+                User member = memberMap.get(keyDto.getUserId());
+                if (member != null) {
+                    log.info("[DEBUG] Match found for userId {}. Saving key.", keyDto.getUserId());
+                    DiaryKey diaryKey = DiaryKey.builder()
+                            .diary(savedDiary)
+                            .user(member)
+                            .encryptedAesKey(keyDto.getEncryptedAesKey())
+                            .build();
+                    diaryKeyRepository.save(diaryKey);
+                } else {
+                    log.warn("[DEBUG] No matching accepted member found for userId {}. Skipping key.", keyDto.getUserId());
+                }
+            }
+        }
+
+        return new DiaryResponseDto(savedDiary, s3Uploader);
     }
-
-
 
     public DiaryDetailResponseDto getDiaryDetail(Long diaryId, String email) {
         log.info("Fetching diary detail for diaryId: {}, user: {}", diaryId, email);
@@ -67,8 +112,11 @@ public class DiaryService {
 
         groupMemberService.validateAcceptedMember(user, diary.getGroup());
 
+        DiaryKey diaryKey = diaryKeyRepository.findByDiaryAndUser(diary, user)
+                .orElseThrow(() -> new NotFoundException("일기 키를 찾을 수 없습니다."));
+
         log.info("Successfully fetched diary detail for diaryId: {}", diaryId);
-        return new DiaryDetailResponseDto(diary, s3Uploader);
+        return new DiaryDetailResponseDto(diary, diaryKey, s3Uploader);
     }
 
 }
