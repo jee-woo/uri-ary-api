@@ -1,18 +1,18 @@
 # ✍️ 우리어리 - 교환 일기 프로젝트
 
-카카오 로그인 기반의 그룹형 교환 일기 서비스입니다.  
+카카오 로그인 기반의 그룹형 교환 일기 서비스입니다.
 사용자는 그룹을 만들고 함께 일기를 쓰고, 댓글로 소통할 수 있습니다.
 
 ---
 
 ## ✅ 기술 스택
 
-| 구분       | 기술 |
-|------------|------|
-| **Backend**  | Spring Boot, Spring Security, JWT, OAuth2 (Kakao) |
+| 구분 | 기술 |
+| --- | --- |
+| **Backend** | Spring Boot, Spring Security, JWT, OAuth2 (Kakao) |
 | **Database** | H2 (개발용), MySQL (RDS - 운영용), JPA (Hibernate) |
-| **Storage**  | AWS S3 (Presigned URL 기반 이미지 업로드) |
-| **Infra**    | EC2 (Ubuntu), RDS (MySQL), HTTPS (443), GitHub Actions 예정 |
+| **Storage** | AWS S3 (Presigned URL 기반 이미지 업로드) |
+| **Infra** | EC2 (Ubuntu), RDS (MySQL), HTTPS (443), GitHub Actions 예정 |
 
 ---
 
@@ -35,25 +35,63 @@
 - 댓글 / 대댓글 작성 및 트리 구조 렌더링
 - 일기별 댓글 목록 조회
 
+### 🔒 E2EE (End-to-End Encryption)
+- 모든 일기 내용은 사용자 기기에서 암호화되어 서버에 저장됩니다.
+- 그룹에 새로운 멤버가 추가될 때, 기존 멤버가 새로운 멤버의 공개키를 사용하여 일기 암호화 키를 다시 암호화하여 공유합니다.
+- 이를 통해 새로운 멤버도 과거의 일기를 복호화하여 볼 수 있습니다.
+
 ---
 
 ## 🗄️ DB 설계
 
 ### 📌 주요 테이블
 
-| 테이블       | 설명                                                                                                                   |
-| ------------ | -------------------------------------------------------------------------------------------------------------------- |
-| `users`      | 사용자 정보 테이블 (예: `email`, `nickname`, `created_at` 등)                                                                  |
-| `user_group` | **그룹 정보 테이블** (예: `id`, `name`, `code`, `created_at` 등) |
-| `group_user` | **사용자-그룹 간 다대다 관계를 나타내는 조인 테이블**<br>`group_id`, `user_id` 로 구성                                                       |
-| `diary`      | 일기 정보 테이블 (예: `title`, `content`, `image_path`, `created_at` 등)<br>각 일기는 특정 그룹과 작성자(`user`)에 속함                      |
-| `comment`    | 댓글 및 대댓글 테이블<br>`diary_id`, `user_id`, `parent_id`(대댓글 여부 판별) 등 포함                                                   |
+| 테이블 | 설명 |
+| --- | --- |
+| `users` | 사용자 정보 테이블 |
+| `groups` | 그룹 정보 테이블 |
+| `group_members` | 사용자와 그룹의 관계를 나타내는 테이블 |
+| `diary` | 일기 정보 테이블 |
+| `diary_keys` | 일기 암호화 키 정보 테이블 |
+| `comment` | 댓글 정보 테이블 |
+| `notification` | 알림 정보 테이블 |
 
 
 ### 🧩 ERD
 
 ![ERD](https://github.com/user-attachments/assets/e2959342-736c-45f7-af5c-654b7fc3a4f8)
 
+
+---
+
+## 📖 API Endpoints
+
+### Auth
+- `POST /api/auth/login`: 카카오 로그인
+- `POST /api/auth/refresh`: JWT 토큰 재발급
+
+### User
+- `GET /api/user/me`: 내 정보 조회
+- `POST /api/user/me/publicKey`: 공개키 등록
+
+### Groups
+- `POST /api/groups`: 그룹 생성
+- `GET /api/groups/{groupId}`: 그룹 상세 조회
+- `GET /api/groups/{groupId}/members`: 그룹 멤버 목록 조회
+- `POST /api/groups/join-requests`: 그룹 참여 요청
+- `GET /api/groups/join-requests/{targetId}/approval-info`: 그룹 가입 승인에 필요한 정보 조회
+- `POST /api/groups/join-requests/{targetId}/approve`: 그룹 가입 요청 승인 및 키 교환
+
+### Diaries
+- `POST /api/groups/{groupId}/diaries`: 일기 작성
+- `GET /api/diaries/{diaryId}`: 일기 상세 조회
+
+### Comments
+- `POST /api/diaries/{diaryId}/comments`: 댓글 작성
+
+### Notifications
+- `GET /api/notifications`: 알림 목록 조회
+- `POST /api/notifications/{notificationId}/read`: 알림 읽음 처리
 
 ---
 
@@ -78,4 +116,3 @@
 - EC2 (Ubuntu) 서버에 JAR 파일 배포
 - MySQL RDS와 연결
 - `application-prod.properties` 분리 사용
-
