@@ -30,16 +30,33 @@ public class GroupController {
         groupMemberService.requestToJoinGroup(userDetails.getId(), groupId);
     }
 
-    @Operation(summary = "그룹 가입 요청 승인")
+    @Operation(summary = "그룹 가입 승인에 필요한 정보 조회")
+    @GetMapping("/join-requests/{targetId}/approval-info")
+    public ApprovalInfoResponse getApprovalInfo(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long targetId) {
+        return groupMemberService.getApprovalInfo(userDetails.getId(), targetId);
+    }
+
+    @Operation(summary = "그룹 가입 요청 승인 및 키 교환")
     @PostMapping("/join-requests/{targetId}/approve")
-    public void approveJoinRequest(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable Long targetId) {
-        groupMemberService.approveJoinRequest(userDetails.getId(), targetId);
+    public void approveJoinRequest(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long targetId,
+            @RequestBody ApproveMemberRequest request) {
+        groupMemberService.approveMemberWithKeys(userDetails.getId(), targetId, request);
     }
 
     @Operation(summary = "그룹 가입 대기자 목록 조회")
     @GetMapping("/{groupId}/pending-members")
     public List<PendingMemberResponseDto> getPendingMembers(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable Long groupId) {
         return groupMemberService.getPendingMembers(userDetails.getId(), groupId);
+    }
+
+    @Operation(summary = "그룹 멤버 목록 조회")
+    @GetMapping("/{groupId}/members")
+    public List<GroupMemberResponseDto> getGroupMembers(@PathVariable Long groupId, @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return groupMemberService.getGroupMembers(groupId, userDetails.getId());
     }
 
     @GetMapping("/user")
