@@ -63,16 +63,6 @@ public class DiaryService {
         Diary savedDiary = diaryRepository.save(diary);
         log.info("Diary created with id: {}", savedDiary.getId());
 
-        // [DEBUG] Log received keys from client
-        if (dto.getKeys() == null) {
-            log.warn("[DEBUG] Keys list from client is null.");
-        } else {
-            log.info("[DEBUG] Received {} keys from client.", dto.getKeys().size());
-            dto.getKeys().forEach(k -> 
-                log.info("[DEBUG] Client Key DTO: userId={}, key is present={}", k.getUserId(), k.getEncryptedAesKey() != null)
-            );
-        }
-
         List<GroupMember> acceptedMembers = group.getGroupMembers().stream()
                 .filter(gm -> gm.getStatus() == MemberStatus.ACCEPTED)
                 .toList();
