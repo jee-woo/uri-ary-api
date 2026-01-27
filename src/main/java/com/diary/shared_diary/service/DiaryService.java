@@ -6,10 +6,7 @@ import com.diary.shared_diary.dto.diary.DiaryRequestDto;
 import com.diary.shared_diary.dto.diary.DiaryResponseDto;
 import com.diary.shared_diary.dto.diary.EncryptedDiaryKeyDto;
 import com.diary.shared_diary.exception.NotFoundException;
-import com.diary.shared_diary.repository.DiaryKeyRepository;
-import com.diary.shared_diary.repository.DiaryRepository;
-import com.diary.shared_diary.repository.GroupRepository;
-import com.diary.shared_diary.repository.UserRepository;
+import com.diary.shared_diary.repository.*;
 import com.diary.shared_diary.util.S3Uploader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +29,7 @@ public class DiaryService {
     private final GroupRepository groupRepository;
     private final UserRepository userRepository;
     private final DiaryKeyRepository diaryKeyRepository;
+    private final GroupMemberRepository groupMemberRepository;
     private final S3Uploader s3Uploader;
     private final GroupMemberService groupMemberService;
 
@@ -63,17 +61,11 @@ public class DiaryService {
         Diary savedDiary = diaryRepository.save(diary);
         log.info("Diary created with id: {}", savedDiary.getId());
 
-        List<GroupMember> acceptedMembers = group.getGroupMembers().stream()
-                .filter(gm -> gm.getStatus() == MemberStatus.ACCEPTED)
-                .toList();
+        List<GroupMember> acceptedMembers = groupMemberRepository.findByGroupIdAndStatusWithUser(groupId, MemberStatus.ACCEPTED);
 
         Map<Long, User> memberMap = acceptedMembers.stream()
                 .map(GroupMember::getUser)
                 .collect(Collectors.toMap(User::getId, Function.identity()));
-
-        // [DEBUG] Log server-side member list
-        log.info("[DEBUG] Found {} accepted members in the group.", memberMap.size());
-        memberMap.keySet().forEach(id -> log.info("[DEBUG] Accepted member ID on server: {}", id));
 
         if (dto.getKeys() != null) {
             for (EncryptedDiaryKeyDto keyDto : dto.getKeys()) {

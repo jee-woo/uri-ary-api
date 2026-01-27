@@ -139,7 +139,7 @@ public class GroupMemberService {
         Group group = groupRepository.getOrThrow(groupId);
         validateAcceptedMember(requestingUser, group);
 
-        List<GroupMember> acceptedMembers = groupMemberRepository.findByGroupAndStatus(group, MemberStatus.ACCEPTED);
+        List<GroupMember> acceptedMembers = groupMemberRepository.findByGroupIdAndStatusWithUser(group.getId(), MemberStatus.ACCEPTED);
 
         return acceptedMembers.stream()
                 .map(GroupMemberResponseDto::from)
