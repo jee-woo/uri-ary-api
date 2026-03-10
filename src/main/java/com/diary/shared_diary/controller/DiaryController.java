@@ -33,6 +33,17 @@ public class DiaryController {
     }
 
 
+    @DeleteMapping("/{diaryId}")
+    public ResponseEntity<Void> deleteDiary(
+            @PathVariable Long groupId,
+            @PathVariable Long diaryId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        log.info("[DIARY-DELETE] Request user: {}, diary: {}", userDetails.getUsername(), diaryId);
+        diaryService.deleteDiary(diaryId, userDetails.getUsername());
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/{diaryId}")
     public DiaryDetailResponseDto getDiaryDetail(
             @PathVariable Long diaryId,

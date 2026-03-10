@@ -87,6 +87,25 @@ public class DiaryService {
         return new DiaryResponseDto(savedDiary, s3Uploader);
     }
 
+    @Transactional
+    public void deleteDiary(Long diaryId, String email) {
+        log.info("Deleting diary for diaryId: {}, user: {}", diaryId, email);
+        Diary diary = diaryRepository.getOrThrow(diaryId);
+        User user = userRepository.getByEmailOrThrow(email);
+
+        if (!diary.getAuthor().getId().equals(user.getId())) {
+            throw new org.springframework.security.access.AccessDeniedException("본인이 작성한 일기만 삭제할 수 있습니다.");
+        }
+
+        if (diary.getImagePath() != null) {
+            s3Uploader.delete(diary.getImagePath());
+        }
+
+        diaryKeyRepository.deleteByDiary(diary);
+        diaryRepository.delete(diary);
+        log.info("Diary deleted: {}", diaryId);
+    }
+
     public DiaryDetailResponseDto getDiaryDetail(Long diaryId, String email) {
         log.info("Fetching diary detail for diaryId: {}, user: {}", diaryId, email);
         Diary diary = diaryRepository.getOrThrow(diaryId);
@@ -97,8 +116,10 @@ public class DiaryService {
         DiaryKey diaryKey = diaryKeyRepository.findByDiaryAndUser(diary, user)
                 .orElseThrow(() -> new NotFoundException("일기 키를 찾을 수 없습니다."));
 
+        boolean isMine = diary.getAuthor().getId().equals(user.getId());
+
         log.info("Successfully fetched diary detail for diaryId: {}", diaryId);
-        return new DiaryDetailResponseDto(diary, diaryKey, s3Uploader);
+        return new DiaryDetailResponseDto(diary, diaryKey, s3Uploader, isMine);
     }
 
 }

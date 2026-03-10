@@ -22,6 +22,7 @@ public class DiaryDetailResponseDto {
     private String imageUrl;
     private List<CommentResponseDto> comments;
     private LocalDateTime createdAt;
+    private boolean isMine;
     private EncryptedKeyInfo keyInfo; // for key
 
     @Getter
@@ -30,7 +31,7 @@ public class DiaryDetailResponseDto {
         private String encryptedAesKey;
     }
 
-    public DiaryDetailResponseDto(Diary diary, DiaryKey diaryKey, S3Uploader uploader) {
+    public DiaryDetailResponseDto(Diary diary, DiaryKey diaryKey, S3Uploader uploader, boolean isMine) {
         this.id = diary.getId();
         this.title = diary.getTitle();
         this.encryptedContent = diary.getEncryptedContent();
@@ -41,6 +42,7 @@ public class DiaryDetailResponseDto {
         this.imageUrl = diary.getImagePath() != null
                 ? uploader.getPresignedUrl(diary.getImagePath())
                 : null;
+        this.isMine = isMine;
         this.comments = diary.getComments().stream()
                 .map(CommentResponseDto::new)
                 .collect(Collectors.toList());

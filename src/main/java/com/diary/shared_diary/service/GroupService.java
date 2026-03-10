@@ -16,7 +16,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -39,11 +42,32 @@ public class GroupService {
         User user = userRepository.getByEmailOrThrow(email);
         List<GroupMember> groupMembers = groupMemberRepository.findByUser(user);
         log.info("Found {} groups for user: {}", groupMembers.size(), email);
-        return groupMembers.stream()
+        Map<Long, LocalDateTime> joinedAtByGroupId = groupMembers.stream()
+                .collect(Collectors.toMap(gm -> gm.getGroup().getId(), GroupMember::getJoinedAt));
+
+        List<GroupResponseDto> dtos = groupMembers.stream()
                 .map(groupMember -> {
                     Group group = groupMember.getGroup();
-                    return new GroupResponseDto(group.getId(), group.getName(), group.getCode(), groupMember.getStatus());
+                    int memberCount = (int) group.getGroupMembers().stream()
+                            .filter(gm -> gm.getStatus() == MemberStatus.ACCEPTED)
+                            .count();
+                    LocalDateTime lastDiaryAt = diaryRepository.findTop1ByGroupOrderByCreatedAtDesc(group)
+                            .map(Diary::getCreatedAt)
+                            .orElse(null);
+                    return new GroupResponseDto(group.getId(), group.getName(), group.getCode(), groupMember.getStatus(), memberCount, lastDiaryAt);
                 })
+                .toList();
+
+        return dtos.stream()
+                .sorted(Comparator
+                        .comparing((GroupResponseDto dto) -> dto.status() == MemberStatus.ACCEPTED ? 0 : 1)
+                        .thenComparing(dto -> {
+                            if (dto.status() == MemberStatus.ACCEPTED) {
+                                LocalDateTime lastDiaryAt = dto.lastDiaryAt();
+                                return lastDiaryAt != null ? lastDiaryAt : LocalDateTime.MIN;
+                            }
+                            return joinedAtByGroupId.getOrDefault(dto.id(), LocalDateTime.MIN);
+                        }, Comparator.reverseOrder()))
                 .toList();
     }
 
@@ -83,7 +107,7 @@ public class GroupService {
                 .joinedAt(LocalDateTime.now())
                 .build());
         log.info("Group created with id: {}", group.getId());
-        return new GroupResponseDto(group.getId(), group.getName(), code, MemberStatus.ACCEPTED);
+        return new GroupResponseDto(group.getId(), group.getName(), code, MemberStatus.ACCEPTED, 1, null);
     }
 
     @Transactional

@@ -11,4 +11,5 @@ import java.util.Optional;
 public interface DiaryKeyRepository extends JpaRepository<DiaryKey, Long> {
     List<DiaryKey> findByDiary_Group_IdAndUser_Id(Long groupId, Long userId);
     Optional<DiaryKey> findByDiaryAndUser(Diary diary, User user);
+    void deleteByDiary(Diary diary);
 }
