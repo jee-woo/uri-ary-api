@@ -20,7 +20,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
 
     public List<NotificationResponseDto> getNotifications(Long userId) {
-        List<Notification> notifications = notificationRepository.findByReceiverId(userId);
+        List<Notification> notifications = notificationRepository.findByReceiverIdOrderByCreatedAtDesc(userId);
         log.info("Fetching notifications for user ID: {}", userId);
         return notifications.stream()
                 .map(NotificationResponseDto::from)
