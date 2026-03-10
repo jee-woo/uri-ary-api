@@ -7,12 +7,14 @@ import com.diary.shared_diary.exception.NotFoundException;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface DiaryRepository extends JpaRepository<Diary, Long> {
     List<Diary> findByAuthor(User author);
 
     List<Diary> findByGroup(Group group);
     List<Diary> findByGroupOrderByCreatedAtDesc(Group group);
+    Optional<Diary> findTop1ByGroupOrderByCreatedAtDesc(Group group);
 
     default Diary getOrThrow(Long id) {
         return findById(id)
